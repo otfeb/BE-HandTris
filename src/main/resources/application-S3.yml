@@ -1,8 +1,8 @@
 cloud:
   aws:
     credentials:
-      accessKey:
-      secretKey:
+      accessKey: ENC(DUae3T7OZTxhkDOn0oCxdPYOCgQWUqb3ZdkT9vN9Q6g=)
+      secretKey: ENC(Dl4RX72XAf/ymQVxWrH9+iCLt3Gq0Cfg+4+lBXhA9JellRb7sQlW8WvQp6/lsi3s3Pzk0YvCyWE=)
     region:
       static: ap-northeast-2
     s3:
