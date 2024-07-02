@@ -72,14 +72,9 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.20.44') // 최신 버전 확인
     implementation 'software.amazon.awssdk:s3'
 
-    // redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.0'
-    implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'
-
     //grafana
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-
 }
 
 tasks.named('test') {

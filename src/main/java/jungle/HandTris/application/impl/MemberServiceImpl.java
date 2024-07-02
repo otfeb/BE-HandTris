@@ -30,7 +30,7 @@ public class MemberServiceImpl implements MemberService {
     private String defaultImage;
 
     @Override
-    public Pair<Member, String> signin(MemberRequest memberRequest) {
+    public Pair<Member, String> signin (MemberRequest memberRequest) {
         String username = memberRequest.username();
         String password = memberRequest.password();
 
@@ -67,6 +67,7 @@ public class MemberServiceImpl implements MemberService {
         String username = memberRequest.username();
         String password = memberRequest.password();
         String nickname = memberRequest.nickname();
+
         Member data = new Member(username, bCryptPasswordEncoder.encode(password), nickname);
         data.updateProfileImageUrl(defaultImage);
         MemberRecord memberRecord = new MemberRecord(data);
