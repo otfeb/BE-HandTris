@@ -19,7 +19,7 @@ public record GameRoomDetailRes(
                 gameRoom.getGameCategory(),
                 gameRoom.getParticipantCount(),
                 gameRoom.getParticipantLimit(),
-                gameRoom.getRoomNumber(),
+                gameRoom.getRoomCode(),
                 gameRoom.getGameStatus());
     }
 }
