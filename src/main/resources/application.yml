@@ -1,4 +1,9 @@
 spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
   data:
     redis:
       host: ENC(SzlkL7DPmvISVZRCob2wd9Ol0c+nYhsIJ7vGJg8t+CfXVGJm0s4ckT7GWi1TiHlqzEFRieTR0lG3u3bb9HODXw==)
@@ -12,10 +17,11 @@ spring:
       dev:
         - dev
         - jwt
+        - S3
       prod:
         - prod
         - jwt
-
+        - S3
 jasypt:
   encryptor:
     bean: jasyptStringEncryptor

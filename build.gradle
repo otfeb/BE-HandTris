@@ -67,6 +67,11 @@ dependencies {
     //error monitoring
     implementation group: 'io.micrometer', name: 'micrometer-core', version: '1.12.1'
 
+    // AWS S3
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    implementation platform('software.amazon.awssdk:bom:2.20.44') // 최신 버전 확인
+    implementation 'software.amazon.awssdk:s3'
+
     //grafana
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
