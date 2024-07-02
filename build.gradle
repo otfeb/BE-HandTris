@@ -63,7 +63,8 @@ dependencies {
     implementation 'io.sentry:sentry-spring-boot-starter:6.2.1'
 
     implementation('com.github.napstr:logback-discord-appender:1.0.0')
-    // https://mvnrepository.com/artifact/io.micrometer/micrometer-core
+
+    //error monitoring
     implementation group: 'io.micrometer', name: 'micrometer-core', version: '1.12.1'
 
     // AWS S3
@@ -71,6 +72,9 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.20.44') // 최신 버전 확인
     implementation 'software.amazon.awssdk:s3'
 
+    //grafana
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
