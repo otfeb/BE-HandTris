@@ -22,18 +22,21 @@ import java.util.UUID;
 public class GameRoomServiceImpl implements GameRoomService {
     private final GameRoomRepository gameRoomRepository;
 
+    @Override
     public List<GameRoom> getGameRoomList() {
         return gameRoomRepository.findAllByGameStatusNotPlaying();
     }
 
+    @Override
     public UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq) {
         GameRoom createdGameRoom = new GameRoom(gameRoomDetailReq);
         gameRoomRepository.save(createdGameRoom);
-        return createdGameRoom.getUuid();
+        return createdGameRoom.getRoomCode();
     }
 
-    public GameRoom enterGameRoom(long gameId) {
-        GameRoom gameRoom = gameRoomRepository.findById(gameId).orElseThrow(GameRoomNotFoundException::new);
+    @Override
+    public GameRoom enterGameRoom(String roomCode) {
+        GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow(GameRoomNotFoundException::new);
 
         if (gameRoom.getGameStatus() == GameStatus.PLAYING) {
             throw new PlayingGameException();
@@ -47,8 +50,9 @@ public class GameRoomServiceImpl implements GameRoomService {
         return gameRoom;
     }
 
-    public GameRoom exitGameRoom(long gameId) {
-        GameRoom gameRoom = gameRoomRepository.findById(gameId).orElseThrow(GameRoomNotFoundException::new);
+    @Override
+    public GameRoom exitGameRoom(String roomCode) {
+        GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow(GameRoomNotFoundException::new);
 
         if (gameRoom.getGameStatus() == GameStatus.PLAYING) {
             throw new PlayingGameException();
