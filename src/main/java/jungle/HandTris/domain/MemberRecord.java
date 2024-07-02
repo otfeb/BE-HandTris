@@ -1,5 +1,6 @@
 package jungle.HandTris.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,6 +29,7 @@ public class MemberRecord {
 
     private BigDecimal rate;
 
+    @JsonIgnore
     private LocalTime avgTime;
 
     public MemberRecord(Member member) {

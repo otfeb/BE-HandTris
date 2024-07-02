@@ -2,7 +2,6 @@ package jungle.HandTris.presentation;
 
 import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.application.service.TetrisService;
-import jungle.HandTris.domain.GameMember;
 import jungle.HandTris.presentation.dto.request.RoomStateReq;
 import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
 import jungle.HandTris.presentation.dto.response.RoomOwnerRes;
@@ -12,9 +11,6 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @RestController
@@ -26,17 +22,17 @@ public class TetrisController {
 
     @MessageMapping("/{roomCode}/tetris")
     public void handleTetrisMessage(@DestinationVariable String roomCode, TetrisMessageReq message) {
-        GameMember gameMember = gameRoomService.getGameMember(roomCode); // GameRoomService에서 특정 방 가져오기
+//        GameMember gameMember = gameRoomService.getGameMember(roomCode); // GameRoomService에서 특정 방 가져오기
 
-        if (gameMember != null) {
-            Set<String> connectedUsers = gameMember.getMembers().stream()
-                    .filter(memberId -> !memberId.equals(message.sender())) // 메시지 보낸 사람 제외
-                    .collect(Collectors.toSet());
-
-            connectedUsers.forEach(memberId ->
-                    messagingTemplate.convertAndSendToUser(memberId, "queue/tetris", message)
-            );
-        }
+//        if (gameMember != null) {
+//            Set<String> connectedUsers = gameMember.getMembers().stream()
+//                    .filter(memberId -> !memberId.equals(message.sender())) // 메시지 보낸 사람 제외
+//                    .collect(Collectors.toSet());
+//
+//            connectedUsers.forEach(memberId ->
+//                    messagingTemplate.convertAndSendToUser(memberId, "queue/tetris", message)
+//            );
+//        }
     }
 
     @MessageMapping("/{roomCode}/owner/info")
