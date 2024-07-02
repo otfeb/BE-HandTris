@@ -35,6 +35,17 @@ public class MemberProfileServiceImpl implements MemberProfileService {
     private String defaultImage;
 
     @Override
+    public Pair<String, MemberRecordDetailRes> getMemberProfileWithStatsByNickname(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(UserNotFoundException::new);
+
+        String profileImageUrl = member.getProfileImageUrl();
+        MemberRecordDetailRes memberRecordDetails = new MemberRecordDetailRes(memberRecordService.getMemberRecord(nickname));
+
+        return Pair.of(profileImageUrl, memberRecordDetails);
+    }
+
+    @Override
     public MemberDetailRes loadMemberProfileByToken(HttpServletRequest request) {
         String accessToken = request.getHeader("Authorization").substring(7);
 

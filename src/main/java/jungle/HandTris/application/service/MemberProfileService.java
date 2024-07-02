@@ -10,6 +10,8 @@ import org.springframework.data.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface MemberProfileService {
+    Pair<String, MemberRecordDetailRes> getMemberProfileWithStatsByNickname(String nickname);
+
     MemberDetailRes loadMemberProfileByToken(HttpServletRequest request);
 
     Pair<MemberProfileDetailsRes, MemberRecordDetailRes> myPage(HttpServletRequest request, String username);
