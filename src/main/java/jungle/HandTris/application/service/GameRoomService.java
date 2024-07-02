@@ -16,8 +16,8 @@ public interface GameRoomService {
 
     UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq);
 
-    GameRoom enterGameRoom(String roomNumber);
+    GameRoom enterGameRoom(String roomCode);
 
-    GameRoom exitGameRoom(String roomNumber);
+    GameRoom exitGameRoom(String roomCode);
 
 }
