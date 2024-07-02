@@ -37,7 +37,7 @@ public class MemberRecord {
         this.rate = BigDecimal.ZERO;
         this.avgTime = LocalTime.of(0, 0, 0);
     }
-
+  
     public void win() {
         this.win++;
         updateRate();
