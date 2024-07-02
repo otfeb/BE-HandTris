@@ -50,9 +50,9 @@ public class MemberServiceTest {
             // then
             Member findMember = memberRepository.findByUsername(member.username());
 
-        Assertions.assertThat(findMember.getUsername()).isEqualTo(member.username());
-        Assertions.assertThat(bCryptPasswordEncoder.matches(member.password(), findMember.getPassword())).isTrue();
-        Assertions.assertThat(findMember.getNickname()).isEqualTo(member.nickname());
+            Assertions.assertThat(findMember.getUsername()).isEqualTo(member.username());
+            Assertions.assertThat(bCryptPasswordEncoder.matches(member.password(), findMember.getPassword())).isTrue();
+            Assertions.assertThat(findMember.getNickname()).isEqualTo(member.nickname());
 
         }
 
@@ -237,7 +237,7 @@ public class MemberServiceTest {
             memberService.signup(member);
 
             // when
-            Pair<MemberDetailRes, String> result = memberService.signin(member);
+            Pair<Member, String> result = memberService.signin(member);
 
             // then
             Assertions.assertThat(result).isNotNull();
@@ -245,8 +245,8 @@ public class MemberServiceTest {
             Assertions.assertThat(result.getFirst()).isNotNull(); // Member 객체 확인
             Assertions.assertThat(result.getSecond()).isNotBlank(); // Access Token 확인
 
-            Assertions.assertThat(result.getFirst().username()).isEqualTo("user1");
-            Assertions.assertThat(result.getFirst().nickname()).isEqualTo("user1");
+            Assertions.assertThat(result.getFirst().getUsername()).isEqualTo("user1");
+            Assertions.assertThat(result.getFirst().getNickname()).isEqualTo("user1");
 
         }
 
