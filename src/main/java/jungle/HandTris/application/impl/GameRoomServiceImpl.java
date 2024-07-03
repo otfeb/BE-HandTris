@@ -9,6 +9,7 @@ import jungle.HandTris.domain.GameMember;
 import jungle.HandTris.domain.GameRoom;
 import jungle.HandTris.domain.GameStatus;
 import jungle.HandTris.domain.exception.GameRoomNotFoundException;
+import jungle.HandTris.domain.exception.MemberNotFoundException;
 import jungle.HandTris.domain.exception.ParticipantLimitedException;
 import jungle.HandTris.domain.exception.PlayingGameException;
 import jungle.HandTris.domain.repo.GameMemberRepository;
@@ -47,7 +48,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         String gameRoomKey = GAME_MEMBER_KEY_PREFIX + roomCode;
         String gameMemberGen = redisTemplate.opsForValue().get(gameRoomKey);
 
-        GameMember gameMember = generateGameMember(gameMemberGen);
+        GameMember gameMember = generateGameMember(gameMemberGen, "입장 유저 확인");
 
         return gameMember;
     }
@@ -91,8 +92,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
         String gameMemberGen = redisTemplate.opsForValue().get(key);
 
-        GameMember gameMember = generateGameMember(gameMemberGen);
-        System.out.println(gameMember);
+        GameMember gameMember = generateGameMember(gameMemberGen, "유저 입장");
         gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
         redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
 
@@ -101,34 +101,49 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public GameRoom exitGameRoom(@UserNicknameFromJwt String nickname, String roomCode) {
-        GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow(GameRoomNotFoundException::new);
+        GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode))
+                .orElseThrow(GameRoomNotFoundException::new);
 
         if (gameRoom.getGameStatus() == GameStatus.PLAYING) {
             throw new PlayingGameException();
         }
         gameRoom.exit();
 
+        String key = GAME_MEMBER_KEY_PREFIX + roomCode;
+        String gameMemberGen = redisTemplate.opsForValue().get(key);
+
+        if (gameMemberGen == null) {
+            throw new GameRoomNotFoundException();
+        }
+
+        GameMember gameMember = generateGameMember(gameMemberGen, "유저 나가기");
+
         // nickname으로 프로필 Url과 전적 추출
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
+        GameMemberEssentialDTO dto = new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond());
 
-        // Redis에서 매핑 정보 업데이트
-        String gameMemberGen = redisTemplate.opsForValue().get(GAME_MEMBER_KEY_PREFIX + roomCode);
-        GameMember gameMember = generateGameMember(gameMemberGen);
-        gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
+        if (!gameMember.isPresentMember(dto)) {
+            throw new MemberNotFoundException();
+        }
+        // gameMember에서 해당 유저 삭제
+        gameMember.removeMember(dto);
 
+        System.out.println("남은 사람 체크 " + gameMember.toString());
+
+        // Redis에 업데이트
         if (gameRoom.getParticipantCount() == 0) {
             gameRoomRepository.delete(gameRoom);
-            redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
+            redisTemplate.delete(key);
         } else {
-            redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
-            redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
+            redisTemplate.opsForValue().set(key, gameMember.toString());
         }
         return gameRoom;
     }
 
-    private GameMember generateGameMember(String gameMemberGen) {
+    private GameMember generateGameMember(String gameMemberGen, String msg) {
 
         System.out.println("gameMemberGen:" + gameMemberGen);
+        System.out.println("어떤 동작? :" + msg);
         ObjectMapper objectMapper = new ObjectMapper();
         GameMember gameMember = null;
         try {

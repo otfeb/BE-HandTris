@@ -2,6 +2,7 @@ package jungle.HandTris.domain;
 
 import jungle.HandTris.presentation.dto.request.GameMemberEssentialDTO;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -13,6 +14,7 @@ import java.util.Set;
 @RedisHash(value = "gameMember")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class GameMember {
 
 
@@ -25,7 +27,7 @@ public class GameMember {
         this.id = id;
     }
 
-    public GameMember(String nickname, String first, MemberRecordDetailRes second) {
+    public GameMember(String nickname, String profileImageUrl, MemberRecordDetailRes recordDetail) {
     }
 
     public int gameMemberCount() {
@@ -38,6 +40,10 @@ public class GameMember {
 
     public void removeMember(GameMemberEssentialDTO dto) {
         this.members.remove(dto);
+    }
+
+    public boolean isPresentMember(GameMemberEssentialDTO dto) {
+        return this.members.contains(dto);
     }
 
     public GameMember(String id, GameMemberEssentialDTO member) {
