@@ -28,8 +28,8 @@ public class GameRoomController {
 
     @PostMapping
     public ResponseEnvelope<UUID> createGameRoom(@Valid @RequestBody GameRoomDetailReq gameRoomDetailReq) {
-        UUID gameUuid = gameRoomService.createGameRoom(gameRoomDetailReq);
-        ResponseEnvelope<UUID> result = ResponseEnvelope.of(gameUuid);
+        UUID roomCode = gameRoomService.createGameRoom(gameRoomDetailReq);
+        ResponseEnvelope<UUID> result = ResponseEnvelope.of(roomCode);
         return result;
     }
 

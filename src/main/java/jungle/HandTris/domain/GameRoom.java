@@ -15,7 +15,7 @@ public class GameRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    
+
     private long participantCount;
 
     private long participantLimit;
@@ -28,10 +28,10 @@ public class GameRoom {
     private GameStatus gameStatus;
 
     public GameRoom(GameRoomDetailReq gameRoomDetailReq) {
-        this.participantLimit = gameRoomDetailReq.participantLimit();
+        this.participantCount = 1;
+        this.participantLimit = 2;
         this.roomCode = UUID.randomUUID();
         this.gameStatus = GameStatus.NON_PLAYING;
-        this.participantCount = 1;
     }
 
     public void enter() {
