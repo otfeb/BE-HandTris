@@ -55,7 +55,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public UUID createGameRoom(@UserNicknameFromJwt String nickname, GameRoomDetailReq gameRoomDetailReq) {
-        GameRoom createdGameRoom = new GameRoom(gameRoomDetailReq);
+        GameRoom createdGameRoom = new GameRoom(nickname,gameRoomDetailReq.title());
         gameRoomRepository.save(createdGameRoom);
         // nickname으로 프로필 Url과 전적 추출
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
