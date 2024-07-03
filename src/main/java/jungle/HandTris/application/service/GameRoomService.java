@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface GameRoomService {
     List<GameRoom> getGameRoomList();
 
-    UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq);
+    UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq, String nickName);
 
     GameRoom enterGameRoom(String roomCode);
 

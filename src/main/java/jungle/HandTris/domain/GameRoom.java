@@ -1,7 +1,6 @@
 package jungle.HandTris.domain;
 
 import jakarta.persistence.*;
-import jungle.HandTris.presentation.dto.request.GameRoomDetailReq;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +15,10 @@ public class GameRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    private String title;
+
+    private String creator;
+
     private long participantCount;
 
     private long participantLimit;
@@ -27,7 +30,9 @@ public class GameRoom {
     @Enumerated(value = EnumType.STRING)
     private GameStatus gameStatus;
 
-    public GameRoom(GameRoomDetailReq gameRoomDetailReq) {
+    public GameRoom(String title, String creator) {
+        this.title = title;
+        this.creator = creator;
         this.participantCount = 1;
         this.participantLimit = 2;
         this.roomCode = UUID.randomUUID();

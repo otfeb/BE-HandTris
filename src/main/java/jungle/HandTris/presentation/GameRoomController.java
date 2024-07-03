@@ -1,9 +1,9 @@
 package jungle.HandTris.presentation;
 
-import jakarta.validation.Valid;
 import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.domain.GameRoom;
 import jungle.HandTris.global.dto.ResponseEnvelope;
+import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.GameRoomDetailReq;
 import jungle.HandTris.presentation.dto.response.GameRoomDetailRes;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +27,8 @@ public class GameRoomController {
     }
 
     @PostMapping
-    public ResponseEnvelope<UUID> createGameRoom(@Valid @RequestBody GameRoomDetailReq gameRoomDetailReq) {
-        UUID roomCode = gameRoomService.createGameRoom(gameRoomDetailReq);
+    public ResponseEnvelope<UUID> createGameRoom(@RequestBody GameRoomDetailReq gameRoomDetailReq, @UserNicknameFromJwt String nickName) {
+        UUID roomCode = gameRoomService.createGameRoom(gameRoomDetailReq, nickName);
         ResponseEnvelope<UUID> result = ResponseEnvelope.of(roomCode);
         return result;
     }

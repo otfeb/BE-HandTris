@@ -28,8 +28,8 @@ public class GameRoomServiceImpl implements GameRoomService {
     }
 
     @Override
-    public UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq) {
-        GameRoom createdGameRoom = new GameRoom(gameRoomDetailReq);
+    public UUID createGameRoom(GameRoomDetailReq gameRoomDetailReq, String nickName) {
+        GameRoom createdGameRoom = new GameRoom(gameRoomDetailReq.title(), nickName);
         gameRoomRepository.save(createdGameRoom);
         return createdGameRoom.getRoomCode();
     }
