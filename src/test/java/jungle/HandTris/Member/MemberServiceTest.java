@@ -3,15 +3,19 @@ package jungle.HandTris.Member;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import jungle.HandTris.application.service.MemberProfileService;
+import jungle.HandTris.application.service.MemberRecordService;
 import jungle.HandTris.application.service.MemberService;
 import jungle.HandTris.domain.Member;
-import jungle.HandTris.domain.exception.DuplicateNicknameException;
-import jungle.HandTris.domain.exception.DuplicateUsernameException;
-import jungle.HandTris.domain.exception.PasswordMismatchException;
-import jungle.HandTris.domain.exception.UserNotFoundException;
+import jungle.HandTris.domain.MemberRecord;
+import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
+import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
 import jungle.HandTris.presentation.dto.response.MemberDetailRes;
+import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
+import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
+import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,8 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Set;
@@ -30,6 +37,8 @@ import java.util.Set;
 public class MemberServiceTest {
 
     @Autowired MemberService memberService;
+    @Autowired MemberProfileService memberProfileService;
+    @Autowired MemberRecordService memberRecordService;
     @Autowired MemberRepository memberRepository;
     @Autowired BCryptPasswordEncoder bCryptPasswordEncoder;
     @Autowired private Validator validator;
@@ -50,9 +59,9 @@ public class MemberServiceTest {
             // then
             Member findMember = memberRepository.findByUsername(member.username());
 
-        Assertions.assertThat(findMember.getUsername()).isEqualTo(member.username());
-        Assertions.assertThat(bCryptPasswordEncoder.matches(member.password(), findMember.getPassword())).isTrue();
-        Assertions.assertThat(findMember.getNickname()).isEqualTo(member.nickname());
+            Assertions.assertThat(findMember.getUsername()).isEqualTo(member.username());
+            Assertions.assertThat(bCryptPasswordEncoder.matches(member.password(), findMember.getPassword())).isTrue();
+            Assertions.assertThat(findMember.getNickname()).isEqualTo(member.nickname());
 
         }
 
@@ -237,7 +246,7 @@ public class MemberServiceTest {
             memberService.signup(member);
 
             // when
-            Pair<MemberDetailRes, String> result = memberService.signin(member);
+            Pair<Member, String> result = memberService.signin(member);
 
             // then
             Assertions.assertThat(result).isNotNull();
@@ -245,8 +254,8 @@ public class MemberServiceTest {
             Assertions.assertThat(result.getFirst()).isNotNull(); // Member 객체 확인
             Assertions.assertThat(result.getSecond()).isNotBlank(); // Access Token 확인
 
-            Assertions.assertThat(result.getFirst().username()).isEqualTo("user1");
-            Assertions.assertThat(result.getFirst().nickname()).isEqualTo("user1");
+            Assertions.assertThat(result.getFirst().getUsername()).isEqualTo("user1");
+            Assertions.assertThat(result.getFirst().getNickname()).isEqualTo("user1");
 
         }
 
@@ -279,4 +288,290 @@ public class MemberServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("마이페이지")
+    class MyPage {
+        @Test
+        @DisplayName("정상 마이페이지 호출")
+        public void testMyPageSuccess () {
+            // given
+            MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+            memberService.signup(requestMember);
+            Pair<Member, String> SigninResult = memberService.signin(requestMember);
+            Member member = SigninResult.getFirst();
+            String token = SigninResult.getSecond();
+
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Bearer " + token);
+
+            MemberRecord memberRecord = memberRecordService.getMemberRecord(member.getNickname());
+            MemberRecordDetailRes memberRecordDetailRes = new MemberRecordDetailRes(memberRecord);
+
+            // when
+            Pair<MemberProfileDetailsRes, MemberRecordDetailRes> profileResult =
+                    memberProfileService.myPage(request, member.getUsername());
+
+            // then
+            Assertions.assertThat(profileResult.getFirst().nickname()).isEqualTo(member.getNickname());
+            Assertions.assertThat(profileResult.getFirst().profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+            Assertions.assertThat(profileResult.getSecond()).isEqualTo(memberRecordDetailRes);
+        }
+
+        @Test
+        @DisplayName("A유저가 B유저의 마이페이지 호출")
+        public void testMyPageConnectWrongUser () {
+            // given
+            MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+            memberService.signup(requestMember);
+            String token = memberService.signin(requestMember).getSecond();
+
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Bearer " + token);
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> {
+                        Pair<MemberProfileDetailsRes, MemberRecordDetailRes> result = memberProfileService.myPage(request, "user2");
+                    }).isInstanceOf(UnauthorizedAccessException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 정보 요청")
+    class GetMemberProfile {
+        @Test
+        @DisplayName("회원 정보 요청")
+        public void testLoadMemberProfileByTokenSuccess () {
+            // given
+            MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+            memberService.signup(requestMember);
+            Pair<Member, String> SigninResult = memberService.signin(requestMember);
+            Member member = SigninResult.getFirst();
+            String token = SigninResult.getSecond();
+
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Bearer " + token);
+
+            // when
+            MemberDetailRes profileResult =
+                    memberProfileService.loadMemberProfileByToken(request);
+
+            // then
+            Assertions.assertThat(profileResult.nickname()).isEqualTo(member.getNickname());
+            Assertions.assertThat(profileResult.username()).isEqualTo(member.getUsername());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 정보 수정")
+    class ChangeMemberProfile {
+        @Nested
+        @DisplayName("닉네임 변경")
+        class ChangeMemberNickname {
+            @Test
+            @DisplayName("정상 닉네임 변경")
+            public void testChangeMemberNicknameSuccess () {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq("user2");
+
+                // when
+                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
+                        request, changeNickname, null, false, member.getUsername());
+
+                // then
+                Assertions.assertThat(changeMemberProfile.nickname()).isEqualTo(member.getNickname());
+                Assertions.assertThat(changeMemberProfile.token()).isNotEqualTo(token);
+            }
+
+            @Test
+            @DisplayName("이전과 동일한 닉네임일 때")
+            public void testChangeMemberNicknameWithSameNickname() {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(member.getNickname());
+
+                // when & then
+                Assertions.assertThatThrownBy(() -> {
+                        memberProfileService.updateMemberProfile(
+                                request, changeNickname, null, null, member.getUsername());
+                        }).isInstanceOf(NicknameNotChangedException.class);
+            }
+
+            @Test
+            @DisplayName("이미 존재하는 닉네임일 때")
+            public void testChangeMemberNicknameWithDuplicateNickname() {
+                // given
+                MemberRequest requestMember1 = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                MemberRequest requestMember2 = new MemberRequest("user2", "1q2w3e4r!", "user2");
+                memberService.signup(requestMember1);
+                memberService.signup(requestMember2);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember1);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(requestMember2.nickname());
+
+                // when & then
+                Assertions.assertThatThrownBy(() -> {
+                        memberProfileService.updateMemberProfile(
+                                request, changeNickname, null, null, member.getUsername());
+                    }).isInstanceOf(DuplicateNicknameException.class);
+            }
+        }
+
+        @Nested
+        @DisplayName("프로필 사진 변경")
+        class ChangeMemberProfileImage {
+
+            @Value("${cloud.aws.s3.defaultImage}")
+            String defaultImage;
+
+            @Test
+            @DisplayName("정상 프로필 사진 변경")
+            public void testChangeMemberProfileImageSuccess () {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+
+                // 변경하려는 프로필 사진
+                MockMultipartFile changeProfileImage = new MockMultipartFile(
+                        "image", // 파라미터 이름
+                        "image.png", // 파일 이름
+                        "image/png", // 컨텐츠 타입
+                        ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQ" +
+                                "UBAScY42YAAAAASUVORK5CYII=").getBytes() // PNG 이미지 데이터 (Base64)
+                );
+
+                // when
+                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
+                        request, changeNickname, changeProfileImage, false, member.getUsername());
+
+                // then
+                Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+            }
+
+            @Test
+            @DisplayName("정상 프로필 사진 제거")
+            public void testChangeMemberDefaultProfileImageSuccess () {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+                // 변경하려는 프로필 사진
+                MockMultipartFile changeProfileImage = new MockMultipartFile(
+                        "image", // 파라미터 이름
+                        "image.png", // 파일 이름
+                        "image/png", // 컨텐츠 타입
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=".getBytes() // PNG 이미지 데이터 (Base64)
+                );
+
+                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
+                        request, changeNickname, changeProfileImage, false, member.getUsername());
+
+                Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+
+                // when
+                memberProfileService.updateMemberProfile(
+                        request, changeNickname, null, true, member.getUsername());
+                // then
+                Assertions.assertThat(defaultImage).isEqualTo(member.getProfileImageUrl());
+            }
+
+            @Test
+            @DisplayName("이미지 파일이 아닐 때")
+            public void testChangeMemberNicknameWithSameNickname() {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+                // 변경하려는 프로필 사진
+                MockMultipartFile changeProfileImage = new MockMultipartFile(
+                        "image", // 파라미터 이름
+                        "image.txt", // 파일 이름
+                        "text/plain", // 컨텐츠 타입
+                        "Hello, World!".getBytes() // 파일 내용
+                );
+
+                // when & then
+                Assertions.assertThatThrownBy(() -> {
+                    memberProfileService.updateMemberProfile(
+                            request, changeNickname, changeProfileImage, false, member.getUsername());
+                }).isInstanceOf(InvalidImageTypeException.class);
+            }
+
+            @Test
+            @DisplayName("지정한 이미지 확장자 타입이 아닐 때 (png, jpg, jpeg만 허용)")
+            public void testChangeMemberNicknameWithDuplicateNickname() {
+                // given
+                MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                memberService.signup(requestMember);
+                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                Member member = SigninResult.getFirst();
+                String token = SigninResult.getSecond();
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + token);
+
+                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+                // 변경하려는 프로필 사진
+                MockMultipartFile changeProfileImage = new MockMultipartFile(
+                        "image", // 파라미터 이름
+                        "image.gif", // 파일 이름
+                        "image/gif", // 컨텐츠 타입
+                        ("R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNw" +
+                                "fjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+                                "AAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQ" +
+                                "AosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLC" +
+                                "VDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7").getBytes() // GIF 이미지 데이터 (Base64)
+                );
+
+                // when & then
+                Assertions.assertThatThrownBy(() -> {
+                    memberProfileService.updateMemberProfile(
+                            request, changeNickname, changeProfileImage, false, member.getUsername());
+                }).isInstanceOf(InvalidImageTypeException.class);
+            }
+        }
+    }
 }
