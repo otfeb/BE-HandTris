@@ -15,11 +15,7 @@ public class GameRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-
-    @Column(nullable = false)
-    @Enumerated(value = EnumType.STRING)
-    private GameCategory gameCategory;
-
+    
     private long participantCount;
 
     private long participantLimit;
@@ -32,7 +28,6 @@ public class GameRoom {
     private GameStatus gameStatus;
 
     public GameRoom(GameRoomDetailReq gameRoomDetailReq) {
-        this.gameCategory = GameCategory.valueOf(GameCategory.class, gameRoomDetailReq.gameCategory());
         this.participantLimit = gameRoomDetailReq.participantLimit();
         this.roomCode = UUID.randomUUID();
         this.gameStatus = GameStatus.NON_PLAYING;
