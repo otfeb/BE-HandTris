@@ -16,4 +16,14 @@ public record MemberRecordDetailRes(
                 memberRecord.getRate(),
                 memberRecord.getAvgTime().toString());
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "\"win\":" + win + "," +
+                "\"lose\":" + lose + "," +
+                "\"rate\":" + rate + "," +
+                "\"avgTime\":\"" + avgTime + "\"" +
+                '}';
+    }
 }

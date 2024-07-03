@@ -1,5 +1,7 @@
 package jungle.HandTris.application.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.application.service.MemberProfileService;
@@ -20,7 +22,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GameRoomServiceImpl implements GameRoomService {
     private final GameRoomRepository gameRoomRepository;
-    private final RedisTemplate<String, GameMember> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private final MemberProfileService memberProfileService;
     private final GameMemberRepository gameMemberRepository;
 
@@ -44,11 +45,9 @@ public class GameRoomServiceImpl implements GameRoomService {
     @Override
     public GameMember getGameRoom(String roomCode) {
         String gameRoomKey = GAME_MEMBER_KEY_PREFIX + roomCode;
-        GameMember gameMember = redisTemplate.opsForValue().get(gameRoomKey);
+        String gameMemberGen = redisTemplate.opsForValue().get(gameRoomKey);
 
-        if (gameMember == null) {
-            throw new GameRoomNotFoundException();
-        }
+        GameMember gameMember = generateGameMember(gameMemberGen);
 
         return gameMember;
     }
@@ -64,7 +63,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         GameMember gameMember = new GameMember(roomCode);
         gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
         String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
-        redisTemplate.opsForValue().set(gameKey, gameMember);
+        redisTemplate.opsForValue().set(gameKey, gameMember.toString());
 
         return createdGameRoom.getRoomCode();
     }
@@ -90,13 +89,12 @@ public class GameRoomServiceImpl implements GameRoomService {
         System.out.println(GAME_MEMBER_KEY_PREFIX + roomCode);
         String key = GAME_MEMBER_KEY_PREFIX + roomCode;
 
-        /*ValueOperations<String, GameMember> ops = redisTemplate.opsForValue();
-        String a = ops.get(key).toString();
-        System.out.println("ops:" + a);*/
-        GameMember gameMember = new GameMember("test", new GameMemberEssentialDTO("test", "test", new MemberRecordDetailRes(0, 0, new BigDecimal(0), "AS")));
-        System.out.println("!!!!:" + gameMember.toString());
-///        gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
-//        redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember);
+        String gameMemberGen = redisTemplate.opsForValue().get(key);
+
+        GameMember gameMember = generateGameMember(gameMemberGen);
+        System.out.println(gameMember);
+        gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
+        redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
 
         return gameRoom;
     }
@@ -114,7 +112,8 @@ public class GameRoomServiceImpl implements GameRoomService {
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
 
         // Redis에서 매핑 정보 업데이트
-        GameMember gameMember = redisTemplate.opsForValue().get(GAME_MEMBER_KEY_PREFIX + roomCode);
+        String gameMemberGen = redisTemplate.opsForValue().get(GAME_MEMBER_KEY_PREFIX + roomCode);
+        GameMember gameMember = generateGameMember(gameMemberGen);
         gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
 
         if (gameRoom.getParticipantCount() == 0) {
@@ -122,8 +121,29 @@ public class GameRoomServiceImpl implements GameRoomService {
             redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
         } else {
             redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
-            redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember);
+            redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
         }
         return gameRoom;
+    }
+
+    private GameMember generateGameMember(String gameMemberGen) {
+
+        System.out.println("gameMemberGen:" + gameMemberGen);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GameMember gameMember = null;
+        try {
+            if (gameMemberGen != null) {
+                gameMember = objectMapper.readValue(gameMemberGen, GameMember.class);
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // 예외 처리
+        }
+        System.out.println("ops:" + gameMember);
+
+        if (gameMember == null) {
+            throw new GameRoomNotFoundException();
+        }
+
+        return gameMember;
     }
 }

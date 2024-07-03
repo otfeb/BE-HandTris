@@ -3,6 +3,7 @@ package jungle.HandTris.domain;
 import jungle.HandTris.presentation.dto.request.GameMemberEssentialDTO;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
@@ -11,6 +12,7 @@ import java.util.Set;
 
 @RedisHash(value = "gameMember")
 @Getter
+@NoArgsConstructor
 public class GameMember {
 
 
@@ -43,14 +45,19 @@ public class GameMember {
         this.members.add(member);
     }
 
-//    @Override
-//    public String toString() {
-//        String s = "GameMember{" +
-//                "\"id\"='" + "\"" + id + "\"" + '\'' +
-//                ", \"members\"=" + "\"" + members + "\"" +
-//                '}';
-//
-//        System.out.println("SSS:" + s);
-//        return s;
-//    }
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"id\":\"").append(id).append("\", \"members\":[");
+
+        for (GameMemberEssentialDTO ge : members) {
+            sb.append(ge.toString());
+            sb.append(",");
+        }
+        if (!members.isEmpty()) {
+            sb.deleteCharAt(sb.length() - 1); // 마지막 쉼표 제거
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
 }
