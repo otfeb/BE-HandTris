@@ -156,7 +156,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         System.out.println("ops:" + gameMember);
 
         if (gameMember == null) {
-            throw new GameRoomNotFoundException();
+            throw new MemberNotFoundException();
         }
 
         return gameMember;
