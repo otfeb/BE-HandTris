@@ -66,7 +66,7 @@ public class MockGameRoomServiceTests {
         when(gameRoomRepository.findByRoomCode(UUID.fromString(gameUuid))).thenReturn(Optional.of(newgame));
 
         /* when : 실제 테스트 실행*/
-        GameRoom enteredGameRoom = gameServiceImpl.enterGameRoom(gameUuid);
+        GameRoom enteredGameRoom = gameServiceImpl.enterGameRoom("nickname",gameUuid);
 
         /* then : 테스트 결과 검증*/
         Assertions.assertThat(enteredGameRoom).isNotNull();
@@ -87,7 +87,7 @@ public class MockGameRoomServiceTests {
         when(gameRoomRepository.findByRoomCode(roomCode)).thenReturn(Optional.of(newgame));
 
         /* when : 실제 테스트 실행 */
-        GameRoom exitedGameRoom = gameServiceImpl.exitGameRoom(newgame.getRoomCode().toString());
+        GameRoom exitedGameRoom = gameServiceImpl.exitGameRoom("nickname",newgame.getRoomCode().toString());
 
         /* then : 테스트 결과 검증 */
         Assertions.assertThat(exitedGameRoom).isNotNull();

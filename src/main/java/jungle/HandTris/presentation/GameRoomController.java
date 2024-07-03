@@ -1,5 +1,6 @@
 package jungle.HandTris.presentation;
 
+import jakarta.validation.Valid;
 import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.domain.GameRoom;
 import jungle.HandTris.global.dto.ResponseEnvelope;
@@ -27,23 +28,23 @@ public class GameRoomController {
     }
 
     @PostMapping
-    public ResponseEnvelope<UUID> createGameRoom(@RequestBody GameRoomDetailReq gameRoomDetailReq, @UserNicknameFromJwt String nickName) {
-        UUID roomCode = gameRoomService.createGameRoom(gameRoomDetailReq, nickName);
-        ResponseEnvelope<UUID> result = ResponseEnvelope.of(roomCode);
+    public ResponseEnvelope<UUID> createGameRoom(@UserNicknameFromJwt String nickname, @Valid @RequestBody GameRoomDetailReq gameRoomDetailReq) {
+        UUID gameUuid = gameRoomService.createGameRoom(nickname, gameRoomDetailReq);
+        ResponseEnvelope<UUID> result = ResponseEnvelope.of(gameUuid);
         return result;
     }
 
     @PostMapping("/{roomCode}/enter")
-    public ResponseEnvelope<GameRoomDetailRes> enterGameRoom(@PathVariable("roomCode") String roomCode) {
-        GameRoom gameRoom = gameRoomService.enterGameRoom(roomCode);
+    public ResponseEnvelope<GameRoomDetailRes> enterGameRoom(@UserNicknameFromJwt String nickname, @PathVariable("roomCode") String roomCode) {
+        GameRoom gameRoom = gameRoomService.enterGameRoom(nickname, roomCode);
         GameRoomDetailRes gameRoomDetailRes = new GameRoomDetailRes(gameRoom);
         ResponseEnvelope<GameRoomDetailRes> result = ResponseEnvelope.of(gameRoomDetailRes);
         return result;
     }
 
     @PostMapping("/{roomCode}/exit")
-    public ResponseEnvelope<String> exitGameRoom(@PathVariable("roomCode") String roomCode) {
-        GameRoom gameRoom = gameRoomService.exitGameRoom(roomCode);
+    public ResponseEnvelope<String> exitGameRoom(@UserNicknameFromJwt String nickname, @PathVariable("roomCode") String roomCode) {
+        GameRoom gameRoom = gameRoomService.exitGameRoom(nickname, roomCode);
         ResponseEnvelope<String> result = ResponseEnvelope.of(roomCode);
         return result;
     }
