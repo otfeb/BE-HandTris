@@ -2,6 +2,7 @@ package jungle.HandTris.global.config;
 
 import jungle.HandTris.application.service.ExpirationListener;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -17,6 +18,9 @@ public class RedisConfig {
 
     private final String PATTERN = "__keyevent@*__:expired";
 
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory, ExpirationListener expirationListener) {
         RedisMessageListenerContainer redisMessageListenerContainer = new RedisMessageListenerContainer();
@@ -28,7 +32,7 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory("localhost", 6379);
+        return new LettuceConnectionFactory(redisHost, 6379);
     }
 
     @Bean
