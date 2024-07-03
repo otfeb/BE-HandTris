@@ -15,8 +15,10 @@ public class GameRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
     private String creator;
 
     private long participantCount;
