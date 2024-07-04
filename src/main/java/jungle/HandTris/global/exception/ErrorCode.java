@@ -23,6 +23,7 @@ public enum ErrorCode {
     GAME_ROOM_NOT_FOUND(HttpStatus.BAD_REQUEST, "게임이 존재하지 않습니다.", Set.of(GameRoomNotFoundException.class)),
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "유저가 존재하지 않습니다.", Set.of(MemberNotFoundException.class)),
     MEMBER_RECORD_NOT_FOUND(HttpStatus.BAD_REQUEST, "전적이 존재하지 않습니다.", Set.of(MemberRecordNotFoundException.class)),
+    DESTINATION_URL_NOT_FOUND(HttpStatus.BAD_REQUEST, "목적지 주소가 존재하지 않습니다.", Set.of(DestinationUrlNotFoundException.class)),
 
     NICKNAME_NOT_CHANGED(HttpStatus.BAD_REQUEST, "현재 닉네임과 동일한 닉네임입니다.", Set.of(NicknameNotChangedException.class)),
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 타입입니다.", Set.of(InvalidImageTypeException.class)),
@@ -38,7 +39,7 @@ public enum ErrorCode {
     INVALID_TOKEN_FORMAT(HttpStatus.UNAUTHORIZED, "잘못된 토큰 형식입니다.", Set.of(InvalidTokenFormatException.class)),
     ACCESS_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Access 토큰이 만료되었습니다.", Set.of(AccessTokenExpiredException.class)),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Refresh 토큰이 만료되었습니다.", Set.of(RefreshTokenExpiredException.class)),
-  
+
     DISCORD_LOG_APPENDER(HttpStatus.INTERNAL_SERVER_ERROR, "디스코드 로그 전송에 실패하였습니다", Set.of(DiscordLogException.class)),
     DISCORD_CONNECT(HttpStatus.INTERNAL_SERVER_ERROR, "디스코드 연결에 실패하였습니다", Set.of(DiscordException.class));
 

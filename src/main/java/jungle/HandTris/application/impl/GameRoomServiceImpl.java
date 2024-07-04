@@ -12,7 +12,6 @@ import jungle.HandTris.domain.exception.GameRoomNotFoundException;
 import jungle.HandTris.domain.exception.MemberNotFoundException;
 import jungle.HandTris.domain.exception.ParticipantLimitedException;
 import jungle.HandTris.domain.exception.PlayingGameException;
-import jungle.HandTris.domain.repo.GameMemberRepository;
 import jungle.HandTris.domain.repo.GameRoomRepository;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.GameMemberEssentialDTO;
@@ -34,7 +33,6 @@ public class GameRoomServiceImpl implements GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final MemberProfileService memberProfileService;
-    private final GameMemberRepository gameMemberRepository;
 
     private static final String GAME_MEMBER_KEY_PREFIX = "gameMember:";
 
@@ -55,7 +53,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public UUID createGameRoom(@UserNicknameFromJwt String nickname, GameRoomDetailReq gameRoomDetailReq) {
-        GameRoom createdGameRoom = new GameRoom(nickname,gameRoomDetailReq.title());
+        GameRoom createdGameRoom = new GameRoom(nickname, gameRoomDetailReq.title());
         gameRoomRepository.save(createdGameRoom);
         // nickname으로 프로필 Url과 전적 추출
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);

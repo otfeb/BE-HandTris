@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TetrisServiceImpl implements TetrisService {
 
-//    private final GameRoomService gameRoomService;
-
     private final GameMemberRepository gameMemberRepository;
 
     public RoomOwnerRes checkRoomOwnerAndReady(String roomCode) {
@@ -23,5 +21,4 @@ public class TetrisServiceImpl implements TetrisService {
         }
         return new RoomOwnerRes(false);
     }
-
 }
