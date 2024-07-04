@@ -1,6 +1,5 @@
 package jungle.HandTris.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalTime;
 
 @Getter
 @Entity
@@ -29,15 +27,11 @@ public class MemberRecord {
 
     private BigDecimal rate;
 
-    @JsonIgnore
-    private LocalTime avgTime;
-
     public MemberRecord(Member member) {
         this.member = member;
         this.win = 0;
         this.lose = 0;
         this.rate = BigDecimal.ZERO;
-        this.avgTime = LocalTime.of(0, 0, 0);
     }
 
     public void win() {

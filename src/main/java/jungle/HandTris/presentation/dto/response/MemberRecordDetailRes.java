@@ -7,14 +7,13 @@ import java.math.BigDecimal;
 public record MemberRecordDetailRes(
         long win,
         long lose,
-        BigDecimal rate,
-        String avgTime
+        BigDecimal rate
 ) {
     public MemberRecordDetailRes(MemberRecord memberRecord) {
         this(memberRecord.getWin(),
                 memberRecord.getLose(),
-                memberRecord.getRate(),
-                memberRecord.getAvgTime().toString());
+                memberRecord.getRate()
+        );
     }
 
     @Override
@@ -23,7 +22,6 @@ public record MemberRecordDetailRes(
                 "\"win\":" + win + "," +
                 "\"lose\":" + lose + "," +
                 "\"rate\":" + rate + "," +
-                "\"avgTime\":\"" + avgTime + "\"" +
                 '}';
     }
 }
