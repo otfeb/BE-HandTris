@@ -21,7 +21,7 @@ public record MemberRecordDetailRes(
         return "{" +
                 "\"win\":" + win + "," +
                 "\"lose\":" + lose + "," +
-                "\"rate\":" + rate + "," +
+                "\"rate\":" + rate +
                 '}';
     }
 }
