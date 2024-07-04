@@ -36,12 +36,11 @@ public class StompHandler implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
-
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         StompCommand commandType = accessor.getCommand();
         String destinationUrl = accessor.getDestination();
         String jwtToken = accessor.getFirstNativeHeader("Authorization");
-
+        
         // Url에서 roodCode 추출
         if (destinationUrl == null) {
             throw new DestinationUrlNotFoundException();
