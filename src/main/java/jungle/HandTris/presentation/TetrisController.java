@@ -19,19 +19,19 @@ public class TetrisController {
     private final TetrisService tetrisService;
 
     @MessageMapping("/{roomCode}/tetris")
-    public void handleTetrisMessage(@DestinationVariable String roomCode, TetrisMessageReq message, @Header("otherUser") String otherUser) {
+    public void handleTetrisMessage(@DestinationVariable("roomCode") String roomCode, TetrisMessageReq message, @Header("otherUser") String otherUser) {
         // Sender가 아닌 유저에게 메시지 전달
         messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris", message);
     }
 
     @MessageMapping("/{roomCode}/owner/info")
-    public void roomOwnerInfo(@DestinationVariable String roomCode) {
+    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
         RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
         messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
     }
 
     @MessageMapping("/{roomCode}/tetris/ready")
-    public void TetrisReady(@DestinationVariable String roomCode, RoomStateReq req) {
+    public void TetrisReady(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
         if (req.isReady()) {
             RoomStateRes res = new RoomStateRes(true, false);
             messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);
@@ -39,7 +39,7 @@ public class TetrisController {
     }
 
     @MessageMapping("/{roomCode}/tetris/start")
-    public void TetrisStart(@DestinationVariable String roomCode, RoomStateReq req) {
+    public void TetrisStart(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
         if (req.isStart()) {
             RoomStateRes res = new RoomStateRes(true, true);
             messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);

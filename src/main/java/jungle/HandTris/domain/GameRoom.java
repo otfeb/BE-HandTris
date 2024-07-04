@@ -32,7 +32,7 @@ public class GameRoom {
     @Enumerated(value = EnumType.STRING)
     private GameStatus gameStatus;
 
-    public GameRoom(String title, String creator) {
+    public GameRoom(String creator, String title) {
         this.title = title;
         this.creator = creator;
         this.participantCount = 1;

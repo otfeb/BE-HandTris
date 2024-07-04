@@ -1,22 +1,23 @@
 package jungle.HandTris.application.impl;
 
 import jungle.HandTris.application.service.TetrisService;
-import jungle.HandTris.domain.GameMember;
-import jungle.HandTris.domain.repo.GameMemberRepository;
+import jungle.HandTris.domain.repo.GameRoomRepository;
 import jungle.HandTris.presentation.dto.response.RoomOwnerRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TetrisServiceImpl implements TetrisService {
 
-    private final GameMemberRepository gameMemberRepository;
+    private final GameRoomRepository gameRoomRepository;
 
     public RoomOwnerRes checkRoomOwnerAndReady(String roomCode) {
-        GameMember byId = gameMemberRepository.findById(roomCode).orElseThrow();
+        int participant = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow().getParticipantCount();
 
-        if (byId.gameMemberCount() == 1) {
+        if (participant == 1) {
             return new RoomOwnerRes(true);
         }
         return new RoomOwnerRes(false);
