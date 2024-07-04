@@ -1,5 +1,6 @@
 package jungle.HandTris.global.handler;
 
+import jungle.HandTris.domain.exception.DestinationUrlNotFoundException;
 import jungle.HandTris.domain.exception.GameRoomNotFoundException;
 import jungle.HandTris.domain.exception.InvalidTokenFormatException;
 import jungle.HandTris.domain.exception.MemberNotFoundException;
@@ -8,6 +9,7 @@ import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.RoomMemberNicknameDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -33,7 +35,7 @@ public class StompHandler implements ChannelInterceptor {
     private static final Pattern UUID_PATTERN = Pattern.compile(UUID_REGEX);
 
     @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+    public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
 
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         StompCommand commandType = accessor.getCommand();
@@ -41,6 +43,10 @@ public class StompHandler implements ChannelInterceptor {
         String jwtToken = accessor.getFirstNativeHeader("Authorization");
 
         // Url에서 roodCode 추출
+        if (destinationUrl == null) {
+            throw new DestinationUrlNotFoundException();
+        }
+
         Matcher matcher = UUID_PATTERN.matcher(destinationUrl);
         String roomCode = matcher.find() ? matcher.group() : null;
 
@@ -73,8 +79,25 @@ public class StompHandler implements ChannelInterceptor {
             } else {
                 throw new InvalidTokenFormatException();
             }
-        }
+        } else if (StompCommand.SEND == commandType) {
+            RoomMemberNicknameDTO cachedUser = roomMap.get(roomCode);
 
+            if (cachedUser == null || !cachedUser.containsNickname(nickname)) {
+                throw new MemberNotFoundException();
+            }
+
+            if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
+                cachedUser = roomMap.get(roomCode);
+
+                // Sender가 아닌 유저 찾기
+                String otherUser = cachedUser.getNicknames().stream()
+                        .filter(nick -> !nick.equals(nickname))
+                        .findFirst()
+                        .orElseThrow(MemberNotFoundException::new);
+
+                accessor.setHeader("otherUser", otherUser);
+            }
+        }
         return message;
     }
 }
