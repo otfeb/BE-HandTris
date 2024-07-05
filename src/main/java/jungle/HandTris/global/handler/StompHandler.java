@@ -9,7 +9,6 @@ import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.RoomMemberNicknameDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -35,12 +34,15 @@ public class StompHandler implements ChannelInterceptor {
     private static final Pattern UUID_PATTERN = Pattern.compile(UUID_REGEX);
 
     @Override
-    public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+    public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         StompCommand commandType = accessor.getCommand();
         String destinationUrl = accessor.getDestination();
         String jwtToken = accessor.getFirstNativeHeader("Authorization");
-        
+
+        System.out.println("어떤 명령어? " + commandType);
+        System.out.println("목적지 어디? " + destinationUrl);
+
         // Url에서 roodCode 추출
         if (destinationUrl == null) {
             throw new DestinationUrlNotFoundException();
@@ -78,7 +80,7 @@ public class StompHandler implements ChannelInterceptor {
             } else {
                 throw new InvalidTokenFormatException();
             }
-        } else if (StompCommand.SEND == commandType) {
+        } else {
             RoomMemberNicknameDTO cachedUser = roomMap.get(roomCode);
 
             if (cachedUser == null || !cachedUser.containsNickname(nickname)) {
@@ -94,7 +96,7 @@ public class StompHandler implements ChannelInterceptor {
                         .findFirst()
                         .orElseThrow(MemberNotFoundException::new);
 
-                accessor.setHeader("otherUser", otherUser);
+                accessor.setNativeHeader("otherUser", otherUser);
             }
         }
         return message;
