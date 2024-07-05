@@ -2,9 +2,9 @@ package jungle.HandTris.global.handler;
 
 import jungle.HandTris.domain.exception.DestinationUrlNotFoundException;
 import jungle.HandTris.domain.exception.GameRoomNotFoundException;
-import jungle.HandTris.domain.exception.InvalidTokenFormatException;
 import jungle.HandTris.domain.exception.MemberNotFoundException;
 import jungle.HandTris.domain.repo.MemberRepository;
+import jungle.HandTris.global.config.ws.User;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.RoomMemberNicknameDTO;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,10 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,70 +37,125 @@ public class StompHandler implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         StompCommand commandType = accessor.getCommand();
         String destinationUrl = accessor.getDestination();
         String jwtToken = accessor.getFirstNativeHeader("Authorization");
 
-        System.out.println("어떤 명령어? " + commandType);
-        System.out.println("목적지 어디? " + destinationUrl);
+        if (StompCommand.CONNECT.equals(commandType)) {
+            if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
+                jwtToken = jwtToken.substring(7);
+            }
+            String tokenNickname = jwtUtil.getNickname(jwtToken);
+            accessor.setUser(new User(tokenNickname));
 
-        // Url에서 roodCode 추출
-        if (destinationUrl == null) {
-            throw new DestinationUrlNotFoundException();
-        }
+        } else if (commandType == StompCommand.SUBSCRIBE) {
+            // Url에서 roodCode 추출
+            if (destinationUrl == null) {
+                throw new DestinationUrlNotFoundException();
+            }
 
-        Matcher matcher = UUID_PATTERN.matcher(destinationUrl);
-        String roomCode = matcher.find() ? matcher.group() : null;
+            Matcher matcher = UUID_PATTERN.matcher(destinationUrl);
 
-        if (roomCode == null) {
-            throw new GameRoomNotFoundException();
-        }
+            if (!matcher.find()) {
+                throw new GameRoomNotFoundException();
+            }
+            String roomCode = matcher.group();
 
-        if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
-            jwtToken = jwtToken.substring(7);
-        }
+            Optional<RoomMemberNicknameDTO> optionalCacheUser = Optional.ofNullable(roomMap.get(roomCode));
+            RoomMemberNicknameDTO cachedUser = null;
 
-        String nickname = jwtUtil.getNickname(jwtToken);
+            if (optionalCacheUser.isEmpty()) {
+                cachedUser = new RoomMemberNicknameDTO();
+                roomMap.put(roomCode, cachedUser);
+            }
 
-        if (StompCommand.CONNECT == commandType) {
-            System.out.println("Connect");
-            // 토큰 유효성 확인
-            if (jwtToken != null && nickname.equals(memberRepository.findByNickname(nickname).orElseThrow().getNickname()) && !jwtUtil.isExpired(jwtToken)) {
-                RoomMemberNicknameDTO cachedUser = roomMap.get(roomCode);
-                // 첫 연결 때 저장
-                if (cachedUser == null) {
-                    cachedUser = new RoomMemberNicknameDTO();
+            if (roomCode == null) {
+                throw new GameRoomNotFoundException();
+            }
+            if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
+                jwtToken = jwtToken.substring(7);
+            }
+            String nickname = jwtUtil.getNickname(jwtToken);
+
+            if (nickname.equals(memberRepository.findByNickname(nickname).orElseThrow().getNickname())) {
+                Optional<RoomMemberNicknameDTO> cuser = Optional.ofNullable(roomMap.get(roomCode));
+                if (cuser.isEmpty()) {
                     cachedUser.addNickname(nickname);
                     roomMap.put(roomCode, cachedUser);
-                } else {
-                    // 해당 닉네임 없으면 예외처리
-                    if (!cachedUser.containsNickname(nickname)) {
-                        throw new MemberNotFoundException();
-                    }
+                }
+
+                if (!cuser.get().getNicknames().contains(nickname)) {
+                    // 매핑 저장
+                    cuser.get().addNickname(nickname);
+                    roomMap.put(roomCode, cuser.get()
+                    );
                 }
             } else {
-                throw new InvalidTokenFormatException();
+                throw new MemberNotFoundException();
             }
-        } else {
+        }
+
+        // 발행 요청
+        else if (commandType == StompCommand.SEND) {
+            // Url에서 roodCode 추출
+            if (destinationUrl == null) {
+                throw new DestinationUrlNotFoundException();
+            }
+
+            Matcher matcher = UUID_PATTERN.matcher(destinationUrl);
+            String roomCode = matcher.find() ? matcher.group() : null;
+
+            if (roomCode == null) {
+                throw new GameRoomNotFoundException();
+            }
+
+            if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
+                jwtToken = jwtToken.substring(7);
+            }
+
+            if (destinationUrl.contains("start")) {
+                RoomMemberNicknameDTO roomMemberNicknameDTO = roomMap.get(roomCode);
+                roomMemberNicknameDTO.getNicknames().forEach(System.out::println);
+            }
+
+            String nickname = jwtUtil.getNickname(jwtToken);
+
             RoomMemberNicknameDTO cachedUser = roomMap.get(roomCode);
 
-            if (cachedUser == null || !cachedUser.containsNickname(nickname)) {
+            // 해당 닉네임 없으면 예외처리
+            if (!cachedUser.containsNickname(nickname)) {
                 throw new MemberNotFoundException();
             }
 
             if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
-                cachedUser = roomMap.get(roomCode);
-
                 // Sender가 아닌 유저 찾기
                 String otherUser = cachedUser.getNicknames().stream()
                         .filter(nick -> !nick.equals(nickname))
                         .findFirst()
                         .orElseThrow(MemberNotFoundException::new);
 
-                accessor.setNativeHeader("otherUser", otherUser);
+                accessor.setHeader("otherUser", otherUser);
             }
         }
+//        else if (commandType == StompCommand.DISCONNECT || commandType == StompCommand.UNSUBSCRIBE) {
+//            System.out.println("ㅇㅇㅇㅇㅇㅇㅇㅇ" + destinationUrl);
+//            Matcher matcher = UUID_PATTERN.matcher(destinationUrl);
+//            String roomCode = matcher.find() ? matcher.group() : null;
+//
+//            if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
+//                jwtToken = jwtToken.substring(7);
+//            }
+//            String nickname = jwtUtil.getNickname(jwtToken);
+//            RoomMemberNicknameDTO cachedUser = roomMap.get(roomCode);
+//
+//            if (roomMap.get(roomCode).getNicknames().size() == 1) {
+//                roomMap.remove(roomCode);
+//            } else if (roomMap.get(roomCode).getNicknames().size() == 2) {
+//                roomMap.get(roomCode).getNicknames().remove(nickname);
+//            }
+//        }
+//        return MessageBuilder.createMessage(message, accessor.getMessageHeaders());
         return message;
     }
 }

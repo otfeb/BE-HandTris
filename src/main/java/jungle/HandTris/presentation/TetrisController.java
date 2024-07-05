@@ -6,12 +6,9 @@ import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
 import jungle.HandTris.presentation.dto.response.RoomOwnerRes;
 import jungle.HandTris.presentation.dto.response.RoomStateRes;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,15 +19,19 @@ public class TetrisController {
     private final TetrisService tetrisService;
 
     @MessageMapping("/{roomCode}/tetris")
-    public void handleTetrisMessage(@DestinationVariable("roomCode") String roomCode, TetrisMessageReq message, @Header("otherUser") String otherUser) {
-        // Sender가 아닌 유저에게 메시지 전달
-        messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris", message, createHeaders(otherUser));
+    public void handleTetrisMessage(@DestinationVariable("roomCode") String roomCode, TetrisMessageReq message, SimpMessageHeaderAccessor headerAccessor) {
+        String otherUser = headerAccessor.getHeader("otherUser").toString();
+
+        // 세션 ID를 이용하여 메시지 전송
+        messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, message);
     }
 
     @MessageMapping("/{roomCode}/owner/info")
     public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
         RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        System.out.println("Controller OWer info");
         messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+        System.out.println("Controller OWer info After");
     }
 
     @MessageMapping("/{roomCode}/tetris/ready")
@@ -47,13 +48,6 @@ public class TetrisController {
             RoomStateRes res = new RoomStateRes(true, true);
             messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);
         }
-    }
-
-    private MessageHeaders createHeaders(String sessionId) {
-        SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
-        headerAccessor.setSessionId(sessionId);
-        headerAccessor.setLeaveMutable(true);
-        return headerAccessor.getMessageHeaders();
     }
 
 }
