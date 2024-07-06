@@ -43,7 +43,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setMaxAge(60*60*60);
         cookie.setSecure(true);
         cookie.setAttribute("SameSite", "None");
-        cookie.setDomain("checkmate.shop");
+        cookie.setDomain("checkmatejungle.shop");
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         return cookie;
