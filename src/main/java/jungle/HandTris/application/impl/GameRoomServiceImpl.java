@@ -46,7 +46,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         String gameRoomKey = GAME_MEMBER_KEY_PREFIX + roomCode;
         String gameMemberGen = redisTemplate.opsForValue().get(gameRoomKey);
 
-        GameMember gameMember = generateGameMember(gameMemberGen, "입장 유저 확인");
+        GameMember gameMember = generateGameMember(gameMemberGen);
 
         return gameMember;
     }
@@ -90,7 +90,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
         String gameMemberGen = redisTemplate.opsForValue().get(key);
 
-        GameMember gameMember = generateGameMember(gameMemberGen, "유저 입장");
+        GameMember gameMember = generateGameMember(gameMemberGen);
         gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
         redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
 
@@ -114,7 +114,7 @@ public class GameRoomServiceImpl implements GameRoomService {
             throw new GameRoomNotFoundException();
         }
 
-        GameMember gameMember = generateGameMember(gameMemberGen, "유저 나가기");
+        GameMember gameMember = generateGameMember(gameMemberGen);
 
         // nickname으로 프로필 Url과 전적 추출
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
@@ -126,8 +126,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         // gameMember에서 해당 유저 삭제
         gameMember.removeMember(dto);
 
-        System.out.println("남은 사람 체크 " + gameMember.toString());
-
         // Redis에 업데이트
         if (gameRoom.getParticipantCount() == 0) {
             gameRoomRepository.delete(gameRoom);
@@ -138,25 +136,15 @@ public class GameRoomServiceImpl implements GameRoomService {
         return gameRoom;
     }
 
-    private GameMember generateGameMember(String gameMemberGen, String msg) {
-
-        System.out.println("gameMemberGen:" + gameMemberGen);
-        System.out.println("어떤 동작? :" + msg);
+    private GameMember generateGameMember(String gameMemberGen) {
         ObjectMapper objectMapper = new ObjectMapper();
-        GameMember gameMember = null;
         try {
             if (gameMemberGen != null) {
-                gameMember = objectMapper.readValue(gameMemberGen, GameMember.class);
+                return objectMapper.readValue(gameMemberGen, GameMember.class);
             }
         } catch (JsonProcessingException e) {
-            e.printStackTrace(); // 예외 처리
+            e.printStackTrace();
         }
-        System.out.println("ops:" + gameMember);
-
-        if (gameMember == null) {
-            throw new MemberNotFoundException();
-        }
-
-        return gameMember;
+        throw new MemberNotFoundException();
     }
 }

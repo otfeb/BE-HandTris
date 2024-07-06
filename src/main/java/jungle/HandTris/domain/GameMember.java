@@ -21,7 +21,7 @@ public class GameMember {
     @Id
     private String id;
 
-    private Set<GameMemberEssentialDTO> members = new LinkedHashSet<>(); // HashSet -> Linked HashSet
+    private Set<GameMemberEssentialDTO> members = new LinkedHashSet<>();
 
     public GameMember(String id) {
         this.id = id;
@@ -35,7 +35,7 @@ public class GameMember {
     }
 
     public void addMember(GameMemberEssentialDTO dto) {
-        this.members.add(dto); // this 붙여야 자기 접근자가 멀티 스레드 환경에서 정상적으로 동작
+        this.members.add(dto);
     }
 
     public void removeMember(GameMemberEssentialDTO dto) {
@@ -50,6 +50,12 @@ public class GameMember {
         this.id = id;
         this.members.add(member);
     }
+
+    public boolean isNicknamePresent(GameMember gameMember, String nickname) {
+        return gameMember.getMembers().stream()
+                .anyMatch(member -> member.nickname().contains(nickname));
+    }
+
 
     @Override
     public String toString() {
