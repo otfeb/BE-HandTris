@@ -35,6 +35,13 @@ public class Member {
         this.nickname = nickname;
     }
 
+    public Member(String username, String password, String nickname, String profileImageUrl) {
+        this.username = username;
+        this.password = password;
+        this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
