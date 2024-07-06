@@ -30,6 +30,7 @@ public class WebConfig implements WebMvcConfigurer {
                         .allowedOrigins("http://localhost:3000", "https://handtris.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("content-type", "authorization", "x-requested-with")
+//                        .exposedHeaders("content-type", "x-requested-with")
                         .allowCredentials(true);
             }
         };

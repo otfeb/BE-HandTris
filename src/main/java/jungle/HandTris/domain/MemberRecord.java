@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalTime;
 
 @Getter
 @Entity
@@ -28,16 +27,13 @@ public class MemberRecord {
 
     private BigDecimal rate;
 
-    private LocalTime avgTime;
-
     public MemberRecord(Member member) {
         this.member = member;
         this.win = 0;
         this.lose = 0;
         this.rate = BigDecimal.ZERO;
-        this.avgTime = LocalTime.of(0, 0, 0);
     }
-  
+
     public void win() {
         this.win++;
         updateRate();

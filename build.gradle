@@ -78,6 +78,15 @@ dependencies {
 
     // OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    
+    //redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'
+
+    //flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+
 }
 
 tasks.named('test') {

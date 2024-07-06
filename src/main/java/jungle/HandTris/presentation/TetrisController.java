@@ -1,75 +1,53 @@
 package jungle.HandTris.presentation;
 
-import jungle.HandTris.application.service.MemberConnectionService;
 import jungle.HandTris.application.service.TetrisService;
-import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
 import jungle.HandTris.presentation.dto.request.RoomStateReq;
+import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
 import jungle.HandTris.presentation.dto.response.RoomOwnerRes;
 import jungle.HandTris.presentation.dto.response.RoomStateRes;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
 public class TetrisController {
     private final SimpMessagingTemplate messagingTemplate;
-
-    private final MemberConnectionService memberConnectionService;
-
     private final TetrisService tetrisService;
 
-    @MessageMapping("/tetris")
-    public void handleTetrisMessage(TetrisMessageReq message) {
-        Set<String> connectedUsers = memberConnectionService.getAllUsers();
-        connectedUsers.stream()
-                .filter(sessionId -> !sessionId.equals(message.sender()))
-                .forEach(sessionId ->
-                        messagingTemplate.convertAndSendToUser(sessionId, "queue/tetris", message, createHeaders(sessionId))
-                );
+    @MessageMapping("/{roomCode}/tetris")
+    public void handleTetrisMessage(@DestinationVariable("roomCode") String roomCode, TetrisMessageReq message, SimpMessageHeaderAccessor headerAccessor) {
+        String otherUser = headerAccessor.getHeader("otherUser").toString();
+
+        // 세션 ID를 이용하여 메시지 전송
+        messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, message);
     }
 
-    @MessageMapping("/owner/info")
-    public void roomOwnerInfo() {
-        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady();
-
-        messagingTemplate.convertAndSend("/topic/owner", roomOwnerRes);
+    @MessageMapping("/{roomCode}/owner/info")
+    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
+        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        System.out.println("Controller OWer info");
+        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+        System.out.println("Controller OWer info After");
     }
 
-    @MessageMapping("/tetris/ready")
-    public void TetrisReady(RoomStateReq req) {
-        if(req.isReady()){
-            RoomStateRes res = new RoomStateRes(true,false);
-            messagingTemplate.convertAndSend("/topic/state", res);
+    @MessageMapping("/{roomCode}/tetris/ready")
+    public void TetrisReady(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
+        if (req.isReady()) {
+            RoomStateRes res = new RoomStateRes(true, false);
+            messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);
         }
     }
 
-    @MessageMapping("/tetris/start")
-    public void TetrisStart(RoomStateReq req) {
+    @MessageMapping("/{roomCode}/tetris/start")
+    public void TetrisStart(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
         if (req.isStart()) {
-            RoomStateRes res = new RoomStateRes(true,true);
-            messagingTemplate.convertAndSend("/topic/state", res);
+            RoomStateRes res = new RoomStateRes(true, true);
+            messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);
         }
     }
 
-    @GetMapping("/user/clear")
-    public void clearUser(){
-        if(memberConnectionService.getRoomMemberCount() != 0){
-            memberConnectionService.clearUser();
-        }
-    }
-
-    private MessageHeaders createHeaders(String sessionId) {
-        SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
-        headerAccessor.setSessionId(sessionId);
-        headerAccessor.setLeaveMutable(true);
-        return headerAccessor.getMessageHeaders();
-    }
 }
