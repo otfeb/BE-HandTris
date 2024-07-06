@@ -18,10 +18,12 @@ spring:
         - dev
         - jwt
         - S3
+        - oauth-dev
       prod:
         - prod
         - jwt
         - S3
+        - oauth-prod
 jasypt:
   encryptor:
     bean: jasyptStringEncryptor
