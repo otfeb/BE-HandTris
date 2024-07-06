@@ -2,6 +2,7 @@ package jungle.HandTris.application.impl;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
+import jungle.HandTris.application.service.BCryptPasswordService;
 import jungle.HandTris.application.service.MemberService;
 import jungle.HandTris.domain.Member;
 import jungle.HandTris.domain.MemberRecord;
@@ -13,7 +14,6 @@ import jungle.HandTris.presentation.dto.request.MemberRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -24,7 +24,7 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MemberRecordRepository memberRecordRepository;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final BCryptPasswordService bCryptPasswordService;
     private final JWTUtil jwtUtil;
     @Value("${cloud.aws.s3.defaultImage}")
     private String defaultImage;
@@ -38,7 +38,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new UserNotFoundException());
 
         // 비밀번호 확인
-        if (!bCryptPasswordEncoder.matches(password, member.getPassword())) {
+        if (!bCryptPasswordService.matches(password, member.getPassword())) {
             throw new PasswordMismatchException();
         }
 
@@ -68,7 +68,7 @@ public class MemberServiceImpl implements MemberService {
         String password = memberRequest.password();
         String nickname = memberRequest.nickname();
 
-        Member data = new Member(username, bCryptPasswordEncoder.encode(password), nickname);
+        Member data = new Member(username, bCryptPasswordService.encode(password), nickname);
         data.updateProfileImageUrl(defaultImage);
         MemberRecord memberRecord = new MemberRecord(data);
 
