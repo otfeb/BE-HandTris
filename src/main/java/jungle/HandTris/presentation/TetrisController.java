@@ -29,9 +29,7 @@ public class TetrisController {
     @MessageMapping("/{roomCode}/owner/info")
     public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
         RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
-        System.out.println("Controller OWer info");
         messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
-        System.out.println("Controller OWer info After");
     }
 
     @MessageMapping("/{roomCode}/tetris/ready")
