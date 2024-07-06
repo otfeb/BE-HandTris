@@ -1,8 +1,10 @@
 package jungle.HandTris.global.config.security;
 
+import jungle.HandTris.application.service.CustomOAuth2MemberService;
 import jungle.HandTris.global.filter.JWTFilter;
 import jungle.HandTris.global.handler.JWTAccessDeniedHandler;
 import jungle.HandTris.global.handler.JWTAuthenticateDeniedHandler;
+import jungle.HandTris.global.handler.OAuth2SuccessHandler;
 import jungle.HandTris.global.jwt.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +13,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -28,12 +29,9 @@ public class SecurityConfig {
     private final JWTUtil jwtUtil;
     private final JWTAccessDeniedHandler jwtAccessDeniedHandler;
     private final JWTAuthenticateDeniedHandler jwtAuthenticateDeniedHandler;
+    private final CustomOAuth2MemberService customOAuth2MemberService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -49,6 +47,11 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .cors(Customizer.withDefaults()
+                )
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                            .userService(customOAuth2MemberService))
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
