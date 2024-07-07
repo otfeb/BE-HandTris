@@ -23,6 +23,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -146,5 +147,13 @@ public class GameRoomServiceImpl implements GameRoomService {
             e.printStackTrace();
         }
         throw new MemberNotFoundException();
+    }
+
+    @Override
+    public boolean isGameRoomPlaying(String roomCode) {
+        Optional<GameRoom> foundGameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode));
+        if (foundGameRoom.isEmpty())
+            throw new GameRoomNotFoundException();
+        return GameStatus.PLAYING.equals(foundGameRoom.get().getGameStatus());
     }
 }
