@@ -49,6 +49,7 @@ public class StompHandler implements ChannelInterceptor {
 
         // 연결 요청
         if (commandType == StompCommand.CONNECT) {
+            System.out.println("------------------------------------------Connect-------");
             String nickname = getNicknameFromToken(jwtToken);
             accessor.setUser(new User(nickname));
             validateMemberExistence(nickname);
@@ -56,28 +57,41 @@ public class StompHandler implements ChannelInterceptor {
 
         // 발행 요청
         else if (commandType == StompCommand.SEND) {
+            System.out.println("------------------------------------------Send-------");
             String roomCode = extractRoomCode(destinationUrl);
             String nickname = getNicknameFromToken(jwtToken);
             GameMember gameMember = getGameMemberFromCache(roomCode);
-
             if (findUser(gameMember.getMembers(), nickname) == null) {
                 throw new MemberNotFoundException();
             }
             Set<GameMemberEssentialDTO> cachedUser = gameMember.getMembers();
+
+            // 일반 발행
             if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
                 // Sender가 아닌 유저 찾기
                 GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
                 accessor.setHeader("otherUser", otherUser.nickname());
-            } else if (destinationUrl.contains("/disconnect")) {
-                GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
+            }
+
+            // 탈주 발행
+            else if (destinationUrl.contains("/disconnect")) {
+                System.out.println("------------------------------------------Disconnect Send-------");
                 GameMemberEssentialDTO disconnectedUser = findUser(cachedUser, nickname);
-                accessor.setHeader("otherUser", otherUser.nickname());
-                gameMember.removeMember(disconnectedUser);
-                if (gameMember.gameMemberCount() != 0) {
+                accessor.setHeader("User", disconnectedUser.nickname());
+                // 1. 게임 방 인원 확인
+                // 혼자인 경우
+                if (gameMember.gameMemberCount() == 1) {
+
+                }
+                // 2명인 경우
+                else {
+                    GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
+                    accessor.setHeader("otherUser", otherUser.nickname());
+
+                    gameMember.removeMember(disconnectedUser);
+
                     redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
                     redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
-                } else {
-                    redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
                 }
             }
         }
