@@ -12,8 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -33,7 +35,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtUtil.createAccessToken(nickname);
         System.out.println("accessToken = " + accessToken);
 
-        response.addCookie(createCookie("Authorization", accessToken));
-        response.sendRedirect("https://handtris.vercel.app/");
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/loginSuccess")
+                .queryParam("access", accessToken)
+                .build()
+                .encode(StandardCharsets.UTF_8)
+                .toUriString();
+
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }
