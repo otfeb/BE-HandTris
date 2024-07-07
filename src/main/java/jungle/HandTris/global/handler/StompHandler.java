@@ -58,27 +58,20 @@ public class StompHandler implements ChannelInterceptor {
         else if (commandType == StompCommand.SEND) {
             String roomCode = extractRoomCode(destinationUrl);
             String nickname = getNicknameFromToken(jwtToken);
-
             GameMember gameMember = getGameMemberFromCache(roomCode);
-            if (gameMember.isNicknamePresent(gameMember, nickname)) {
+
+            if (findUser(gameMember.getMembers(), nickname) == null) {
                 throw new MemberNotFoundException();
             }
-
             Set<GameMemberEssentialDTO> cachedUser = gameMember.getMembers();
-
             if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
                 // Sender가 아닌 유저 찾기
                 GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
                 accessor.setHeader("otherUser", otherUser.nickname());
             } else if (destinationUrl.contains("/disconnect")) {
                 GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
-                GameMemberEssentialDTO disconnectedUser = cachedUser.stream()
-                        .filter(dto -> dto.nickname().equals(nickname))
-                        .findFirst()
-                        .orElseThrow(MemberNotFoundException::new);
-
+                GameMemberEssentialDTO disconnectedUser = findUser(cachedUser, nickname);
                 accessor.setHeader("otherUser", otherUser.nickname());
-
                 gameMember.removeMember(disconnectedUser);
                 if (gameMember.gameMemberCount() != 0) {
                     redisTemplate.delete(GAME_MEMBER_KEY_PREFIX + roomCode);
@@ -130,6 +123,13 @@ public class StompHandler implements ChannelInterceptor {
     private GameMemberEssentialDTO findOtherUser(Set<GameMemberEssentialDTO> cachedUser, String nickname) {
         return cachedUser.stream()
                 .filter(dto -> !dto.nickname().equals(nickname))
+                .findFirst()
+                .orElseThrow(MemberNotFoundException::new);
+    }
+
+    private GameMemberEssentialDTO findUser(Set<GameMemberEssentialDTO> cachedUser, String nickname) {
+        return cachedUser.stream()
+                .filter(dto -> dto.nickname().equals(nickname))
                 .findFirst()
                 .orElseThrow(MemberNotFoundException::new);
     }
