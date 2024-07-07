@@ -36,16 +36,4 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(createCookie("Authorization", accessToken));
         response.sendRedirect("https://handtris.vercel.app/");
     }
-
-    private Cookie createCookie(String key, String value) {
-
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60*60);
-        cookie.setSecure(true);
-        cookie.setAttribute("SameSite", "None");
-        cookie.setDomain("checkmatejungle.shop");
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        return cookie;
-    }
 }
