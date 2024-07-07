@@ -1,6 +1,7 @@
 spring:
   security:
     oauth2:
+      redirect-uri: https://api.checkmatejungle.shop/
       client:
         temppassword: ENC(kof7KM9iTyWvb6wVueqmEGZjOyPFRA7+mwS7ioUOOd5fGyahPdVrFA==)
         registration:

@@ -9,11 +9,14 @@ import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.response.CustomOAuth2Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +24,9 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
+
+    @Value("${spring.security.oauth2.redirect-uri}")
+    String redirectUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -33,19 +39,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtUtil.createAccessToken(nickname);
         System.out.println("accessToken = " + accessToken);
 
-        response.addCookie(createCookie("Authorization", accessToken));
-        response.sendRedirect("https://handtris.vercel.app/");
-    }
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "oauth2/loginSuccess")
+                .queryParam("access", accessToken)
+                .build()
+                .encode(StandardCharsets.UTF_8)
+                .toUriString();
 
-    private Cookie createCookie(String key, String value) {
-
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60*60);
-        cookie.setSecure(true);
-        cookie.setAttribute("SameSite", "None");
-        cookie.setDomain("checkmatejungle.shop");
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        return cookie;
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

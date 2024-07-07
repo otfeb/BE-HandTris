@@ -4,6 +4,7 @@ import jungle.HandTris.application.service.CustomOAuth2MemberService;
 import jungle.HandTris.global.filter.JWTFilter;
 import jungle.HandTris.global.handler.JWTAccessDeniedHandler;
 import jungle.HandTris.global.handler.JWTAuthenticateDeniedHandler;
+import jungle.HandTris.global.handler.OAuth2FailureHandler;
 import jungle.HandTris.global.handler.OAuth2SuccessHandler;
 import jungle.HandTris.global.jwt.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class SecurityConfig {
     private final JWTAuthenticateDeniedHandler jwtAuthenticateDeniedHandler;
     private final CustomOAuth2MemberService customOAuth2MemberService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
 
 
     @Bean
@@ -53,6 +55,7 @@ public class SecurityConfig {
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                             .userService(customOAuth2MemberService))
                         .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 )
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
