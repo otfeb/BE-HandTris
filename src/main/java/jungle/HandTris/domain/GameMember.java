@@ -51,11 +51,6 @@ public class GameMember {
         this.members.add(member);
     }
 
-    public boolean isNicknamePresent(GameMember gameMember, String nickname) {
-        return gameMember.getMembers().stream()
-                .anyMatch(member -> member.nickname().contains(nickname));
-    }
-
 
     @Override
     public String toString() {
