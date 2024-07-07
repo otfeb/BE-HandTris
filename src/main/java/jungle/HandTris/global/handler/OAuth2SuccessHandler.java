@@ -9,6 +9,7 @@ import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.response.CustomOAuth2Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JWTUtil jwtUtil;
 
+    @Value("${spring.security.oauth2.redirect-uri}")
+    String redirectUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
@@ -35,7 +39,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtUtil.createAccessToken(nickname);
         System.out.println("accessToken = " + accessToken);
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/loginSuccess")
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "oauth2/loginSuccess")
                 .queryParam("access", accessToken)
                 .build()
                 .encode(StandardCharsets.UTF_8)
