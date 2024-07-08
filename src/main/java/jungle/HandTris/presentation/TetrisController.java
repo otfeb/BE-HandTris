@@ -54,26 +54,27 @@ public class TetrisController {
     @MessageMapping("/{roomCode}/disconnect")
     public void handleDisconnect(SimpMessageHeaderAccessor headerAccessor, @DestinationVariable(value = "roomCode") String roomCode) {
         System.out.println("\n========================================= controller disconnect send =========================================");
-        System.out.println(headerAccessor);
-
         // playing 중인 게임에서 탈주한 경우
-        if (gameRoomService.isGameRoomPlaying(roomCode)) {
+        // message에서 isStart 확인
+
+        boolean isStart = headerAccessor.getFirstNativeHeader("isStart").equals("true");
+        if (isStart) {
             String[][] emptyBoard = {{}};
             // 탈주 유저의 상대에게 승리 메세지 보내기 ------------------------------
             TetrisMessageReq win = new TetrisMessageReq(emptyBoard, true, false);
             String otherUser = headerAccessor.getHeader("otherUser").toString();
             messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, win);
         }
-        
-        // DB 최신화
-        System.out.println("DB 최신화");
-        String user = headerAccessor.getHeader("User").toString();
-        gameRoomService.exitGameRoom(user, roomCode);
 
         // 방장 최신화
         System.out.println("방장 최신화");
         RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
         messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+        
+        // DB 최신화
+        System.out.println("DB 최신화");
+        String user = headerAccessor.getHeader("User").toString();
+        gameRoomService.exitGameRoom(user, roomCode);
 
 
         System.out.println("\n========================================= disconnect send 종료 =========================================");

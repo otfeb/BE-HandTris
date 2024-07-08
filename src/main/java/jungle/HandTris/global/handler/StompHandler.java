@@ -12,11 +12,9 @@ import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.global.config.ws.User;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.GameMemberEssentialDTO;
-import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -25,7 +23,6 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,86 +43,61 @@ public class StompHandler implements ChannelInterceptor {
     private static final Pattern UUID_PATTERN = Pattern.compile(UUID_REGEX);
     private static final String GAME_MEMBER_KEY_PREFIX = "gameMember:";
 
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
+
+
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        assert accessor != null;
+        if (isDisconnect(accessor))
+            return message;
+
         StompCommand commandType = accessor.getCommand();
-        System.out.println("##################################################");
-        System.out.println(commandType);
-        System.out.println("##################################################");
         String destinationUrl = accessor.getDestination();
         String jwtToken = extractJwtToken(accessor);
+        String nickname = getNicknameFromToken(jwtToken);
 
         // 연결 요청
         if (commandType == StompCommand.CONNECT) {
-            String nickname = getNicknameFromToken(jwtToken);
-            String roomCode = accessor.getFirstNativeHeader("roomCode");
-            String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
-
-            // nickname으로 프로필 Url과 전적 추출
-            Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
-
-            // Redis에 매핑 정보 저장
-            // 만약 key가 이미 존재하면 , 추가만 해주고
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(gameKey))) {
-                System.out.println("---------입장---------");
-                GameMember origin = generateGameMember(redisTemplate.opsForValue().get(gameKey));
-                origin.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
-                redisTemplate.delete(gameKey);
-                redisTemplate.opsForValue().set(gameKey, origin.toString());
-            }
-            // 아니라면 새로 만들어준다.
-            else {
-                System.out.println("---------생성---------");
-                GameMember gameMember = new GameMember(roomCode);
-                gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
-                redisTemplate.opsForValue().set(gameKey, gameMember.toString());
-            }
-            accessor.setUser(new User(nickname));
             validateMemberExistence(nickname);
-
+            accessor.setUser(new User(nickname));
         }
+
         // 발행 요청
         else if (commandType == StompCommand.SEND) {
-            String roomCode = extractRoomCode(destinationUrl);
-            String nickname = getNicknameFromToken(jwtToken);
-            GameMember gameMember = getGameMemberFromCache(roomCode);
 
-            // 뭘 위한 코드였지?
-            if (findUser(gameMember.getMembers(), nickname) == null) {
+            String roomCode = extractRoomCode(destinationUrl);
+            GameMember gameMember = getGameMemberFromCache(roomCode);
+            Set<GameMemberEssentialDTO> cachedUsers = gameMember.getMembers();
+
+            // 방에 참가된 인원인지 확인
+            if (!isUserInRoom(cachedUsers, nickname)) {
                 throw new MemberNotFoundException();
             }
 
-            Set<GameMemberEssentialDTO> cachedUser = gameMember.getMembers();
-
-            if (destinationUrl.contains("/owner")) {
-
-            }
-
             // 일반 발행
-            else if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
-                // Sender가 아닌 유저 찾기
-                GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
+            if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
+                GameMemberEssentialDTO otherUser = findOtherUser(cachedUsers, nickname);
                 accessor.setHeader("otherUser", otherUser.nickname());
             }
 
             // 탈주 발행
             else if (destinationUrl.contains("/disconnect")) {
-
-                GameMemberEssentialDTO disconnectedUser = findUser(cachedUser, nickname);
+                GameMemberEssentialDTO disconnectedUser = findUser(cachedUsers, nickname);
                 accessor.setHeader("User", disconnectedUser.nickname());
 
                 // 2명인 방에서 탈주
                 if (gameMember.gameMemberCount() == 2) {
-                    GameMemberEssentialDTO otherUser = findOtherUser(cachedUser, nickname);
+                    GameMemberEssentialDTO otherUser = findOtherUser(cachedUsers, nickname);
                     accessor.setHeader("otherUser", otherUser.nickname());
                 }
-
             }
         }
         return message;
     }
+
+
+    // 함수들 -----------------------------------------------------------------------------------------------------------
 
     private String extractJwtToken(StompHeaderAccessor accessor) {
         String jwtToken = accessor.getFirstNativeHeader("Authorization");
@@ -159,8 +131,7 @@ public class StompHandler implements ChannelInterceptor {
 
     private GameMember getGameMemberFromCache(String roomCode) {
         String gameMemberGen = redisTemplate.opsForValue().get(GAME_MEMBER_KEY_PREFIX + roomCode);
-        return Optional.ofNullable(generateGameMember(gameMemberGen))
-                .orElseThrow(MemberNotFoundException::new);
+        return generateGameMember(gameMemberGen);
     }
 
     private GameMemberEssentialDTO findOtherUser(Set<GameMemberEssentialDTO> cachedUser, String nickname) {
@@ -178,14 +149,24 @@ public class StompHandler implements ChannelInterceptor {
     }
 
     private GameMember generateGameMember(String gameMemberGen) {
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
             if (gameMemberGen != null) {
+                ObjectMapper objectMapper = new ObjectMapper();
                 return objectMapper.readValue(gameMemberGen, GameMember.class);
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         throw new MemberNotFoundException();
+    }
+
+    private boolean isUserInRoom(Set<GameMemberEssentialDTO> cachedUser, String nickname) {
+        return cachedUser.stream()
+                .anyMatch(dto -> dto.nickname().equals(nickname));
+    }
+
+    private boolean isDisconnect(StompHeaderAccessor accessor) {
+        StompCommand commandType = accessor.getCommand();
+        return commandType == StompCommand.DISCONNECT;
     }
 }

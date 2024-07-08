@@ -57,6 +57,12 @@ public class GameRoomServiceImpl implements GameRoomService {
         GameRoom createdGameRoom = new GameRoom(nickname, gameRoomDetailReq.title());
         gameRoomRepository.save(createdGameRoom);
 
+        String roomCode = createdGameRoom.getRoomCode().toString();
+        String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
+        GameMember gameMember = new GameMember(roomCode);
+        Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
+        gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
+        redisTemplate.opsForValue().set(gameKey, gameMember.toString());
         return createdGameRoom.getRoomCode();
     }
 
@@ -68,7 +74,6 @@ public class GameRoomServiceImpl implements GameRoomService {
             throw new PlayingGameException();
         }
 
-        // nickname으로 프로필 Url과 전적 추출
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
 
         if (gameRoom.getParticipantCount() == gameRoom.getParticipantLimit()) {
@@ -79,10 +84,8 @@ public class GameRoomServiceImpl implements GameRoomService {
 
         // Redis에 매핑 정보 업데이트
         System.out.println(GAME_MEMBER_KEY_PREFIX + roomCode);
-        String key = GAME_MEMBER_KEY_PREFIX + roomCode;
-
-        String gameMemberGen = redisTemplate.opsForValue().get(key);
-
+        String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
+        String gameMemberGen = redisTemplate.opsForValue().get(gameKey);
         GameMember gameMember = generateGameMember(gameMemberGen);
         gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
         redisTemplate.opsForValue().set(GAME_MEMBER_KEY_PREFIX + roomCode, gameMember.toString());
