@@ -18,4 +18,6 @@ public interface GameRoomService {
     GameRoom enterGameRoom(@UserNicknameFromJwt String nickname, String roomCode);
 
     GameRoom exitGameRoom(@UserNicknameFromJwt String nickname, String roomCode);
+
+    boolean isGameRoomPlaying(String roomCode);
 }

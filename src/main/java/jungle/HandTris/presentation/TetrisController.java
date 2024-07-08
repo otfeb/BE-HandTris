@@ -1,5 +1,6 @@
 package jungle.HandTris.presentation;
 
+import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.application.service.TetrisService;
 import jungle.HandTris.presentation.dto.request.RoomStateReq;
 import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TetrisController {
     private final SimpMessagingTemplate messagingTemplate;
     private final TetrisService tetrisService;
+    private final GameRoomService gameRoomService;
 
     @MessageMapping("/{roomCode}/tetris")
     public void handleTetrisMessage(@DestinationVariable("roomCode") String roomCode, TetrisMessageReq message, SimpMessageHeaderAccessor headerAccessor) {
@@ -26,11 +28,6 @@ public class TetrisController {
         messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, message);
     }
 
-    @MessageMapping("/{roomCode}/owner/info")
-    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
-        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
-        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
-    }
 
     @MessageMapping("/{roomCode}/tetris/ready")
     public void TetrisReady(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
@@ -46,6 +43,40 @@ public class TetrisController {
             RoomStateRes res = new RoomStateRes(true, true);
             messagingTemplate.convertAndSend("/topic/state/" + roomCode, res);
         }
+    }
+
+    @MessageMapping("/{roomCode}/owner/info")
+    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode, SimpMessageHeaderAccessor headerAccessor) {
+        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+    }
+
+    @MessageMapping("/{roomCode}/disconnect")
+    public void handleDisconnect(SimpMessageHeaderAccessor headerAccessor, @DestinationVariable(value = "roomCode") String roomCode) {
+        System.out.println("\n========================================= controller disconnect send =========================================");
+        // playing 중인 게임에서 탈주한 경우
+        // message에서 isStart 확인
+        boolean isStart = headerAccessor.getFirstNativeHeader("isStart").equals("true");
+        if (isStart) {
+            String[][] emptyBoard = {{}};
+            // 탈주 유저의 상대에게 승리 메세지 보내기 ------------------------------
+            TetrisMessageReq win = new TetrisMessageReq(emptyBoard, true, false);
+            String otherUser = headerAccessor.getHeader("otherUser").toString();
+            messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, win);
+        }
+
+        // DB 최신화
+        System.out.println("DB 최신화");
+        String user = headerAccessor.getHeader("User").toString();
+        gameRoomService.exitGameRoom(user, roomCode);
+
+        // 방장 최신화 : DB 최신화 아래 있어야 한다.
+        System.out.println("방장 최신화");
+        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+
+
+        System.out.println("\n========================================= disconnect send 종료 =========================================");
     }
 
 }
