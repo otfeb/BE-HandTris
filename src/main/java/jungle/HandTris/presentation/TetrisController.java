@@ -28,11 +28,6 @@ public class TetrisController {
         messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, message);
     }
 
-    @MessageMapping("/{roomCode}/owner/info")
-    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode) {
-        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
-        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
-    }
 
     @MessageMapping("/{roomCode}/tetris/ready")
     public void TetrisReady(@DestinationVariable("roomCode") String roomCode, RoomStateReq req) {
@@ -50,44 +45,37 @@ public class TetrisController {
         }
     }
 
+    @MessageMapping("/{roomCode}/owner/info")
+    public void roomOwnerInfo(@DestinationVariable("roomCode") String roomCode, SimpMessageHeaderAccessor headerAccessor) {
+        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+    }
+
     @MessageMapping("/{roomCode}/disconnect")
     public void handleDisconnect(SimpMessageHeaderAccessor headerAccessor, @DestinationVariable(value = "roomCode") String roomCode) {
         System.out.println("\n========================================= controller disconnect send =========================================");
         System.out.println(headerAccessor);
 
-        // 1. 혼자 있는 상황에서 탈주
-
-        // 2. 둘이 있는 상황에서 탈주
-        // 2-1. 게임 중일 때 탈주
-        // 2-2. 게임 대기일 때 탈주
-
         // playing 중인 게임에서 탈주한 경우
         if (gameRoomService.isGameRoomPlaying(roomCode)) {
             String[][] emptyBoard = {{}};
-            // 탈주 유저의 상대에게 승리 메세지 보내기
+            // 탈주 유저의 상대에게 승리 메세지 보내기 ------------------------------
             TetrisMessageReq win = new TetrisMessageReq(emptyBoard, true, false);
             String otherUser = headerAccessor.getHeader("otherUser").toString();
             messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, win);
         }
-
-
-        // 탈주 유저의 상대에게 승리 메세지 보내기
-        String[][] emptyBoard = {{}};
-        TetrisMessageReq message = new TetrisMessageReq(emptyBoard, true, false);
-        String otherUser = headerAccessor.getHeader("otherUser").toString();
-        messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, message);
-
-
+        
+        // DB 최신화
+        System.out.println("DB 최신화");
         String user = headerAccessor.getHeader("User").toString();
+        gameRoomService.exitGameRoom(user, roomCode);
 
-        System.out.println("방장 최신화");
         // 방장 최신화
+        System.out.println("방장 최신화");
         RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
         messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
 
-        System.out.println("DB 최신화");
-        // DB 최신화
-        gameRoomService.exitGameRoom(user, roomCode);
+
         System.out.println("\n========================================= disconnect send 종료 =========================================");
     }
 

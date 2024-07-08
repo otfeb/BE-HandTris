@@ -56,14 +56,6 @@ public class GameRoomServiceImpl implements GameRoomService {
     public UUID createGameRoom(@UserNicknameFromJwt String nickname, GameRoomDetailReq gameRoomDetailReq) {
         GameRoom createdGameRoom = new GameRoom(nickname, gameRoomDetailReq.title());
         gameRoomRepository.save(createdGameRoom);
-        // nickname으로 프로필 Url과 전적 추출
-        Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
-        // Redis에 매핑 정보 저장
-        String roomCode = createdGameRoom.getRoomCode().toString();
-        GameMember gameMember = new GameMember(roomCode);
-        gameMember.addMember(new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond()));
-        String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
-        redisTemplate.opsForValue().set(gameKey, gameMember.toString());
 
         return createdGameRoom.getRoomCode();
     }
@@ -124,6 +116,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         if (!gameMember.isPresentMember(dto)) {
             throw new MemberNotFoundException();
         }
+
         // gameMember에서 해당 유저 삭제
         gameMember.removeMember(dto);
 

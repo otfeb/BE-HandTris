@@ -16,7 +16,8 @@ public class TetrisServiceImpl implements TetrisService {
 
     public RoomOwnerRes checkRoomOwnerAndReady(String roomCode) {
         int participant = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow().getParticipantCount();
-
+        System.out.println(participant);
+        System.out.println("참가자 000000000000000000000000000000000000000");
         if (participant == 1) {
             return new RoomOwnerRes(true);
         }
