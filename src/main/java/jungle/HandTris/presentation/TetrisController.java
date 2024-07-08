@@ -56,7 +56,6 @@ public class TetrisController {
         System.out.println("\n========================================= controller disconnect send =========================================");
         // playing 중인 게임에서 탈주한 경우
         // message에서 isStart 확인
-
         boolean isStart = headerAccessor.getFirstNativeHeader("isStart").equals("true");
         if (isStart) {
             String[][] emptyBoard = {{}};
@@ -66,15 +65,15 @@ public class TetrisController {
             messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, win);
         }
 
-        // 방장 최신화
-        System.out.println("방장 최신화");
-        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
-        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
-        
         // DB 최신화
         System.out.println("DB 최신화");
         String user = headerAccessor.getHeader("User").toString();
         gameRoomService.exitGameRoom(user, roomCode);
+
+        // 방장 최신화 : DB 최신화 아래 있어야 한다.
+        System.out.println("방장 최신화");
+        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
 
 
         System.out.println("\n========================================= disconnect send 종료 =========================================");

@@ -48,11 +48,14 @@ public class StompHandler implements ChannelInterceptor {
 
 
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-        assert accessor != null;
-        if (isDisconnect(accessor))
-            return message;
+//        if (isDisconnect(accessor))
+//            return message;
 
         StompCommand commandType = accessor.getCommand();
+        // 연결 해제 요청
+        if (commandType == StompCommand.DISCONNECT) {
+            return message;
+        }
         String destinationUrl = accessor.getDestination();
         String jwtToken = extractJwtToken(accessor);
         String nickname = getNicknameFromToken(jwtToken);
@@ -74,15 +77,8 @@ public class StompHandler implements ChannelInterceptor {
             if (!isUserInRoom(cachedUsers, nickname)) {
                 throw new MemberNotFoundException();
             }
-
-            // 일반 발행
-            if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
-                GameMemberEssentialDTO otherUser = findOtherUser(cachedUsers, nickname);
-                accessor.setHeader("otherUser", otherUser.nickname());
-            }
-
-            // 탈주 발행
-            else if (destinationUrl.contains("/disconnect")) {
+            // 탈주 발행 : 게임중 탈주처리를 위해 일반 발행보다 위에 존재
+            if (destinationUrl.contains("/disconnect")) {
                 GameMemberEssentialDTO disconnectedUser = findUser(cachedUsers, nickname);
                 accessor.setHeader("User", disconnectedUser.nickname());
 
@@ -92,6 +88,13 @@ public class StompHandler implements ChannelInterceptor {
                     accessor.setHeader("otherUser", otherUser.nickname());
                 }
             }
+            // 일반 발행
+            else if (destinationUrl.equals("/app/" + roomCode + "/tetris")) {
+                GameMemberEssentialDTO otherUser = findOtherUser(cachedUsers, nickname);
+                accessor.setHeader("otherUser", otherUser.nickname());
+            }
+
+
         }
         return message;
     }
