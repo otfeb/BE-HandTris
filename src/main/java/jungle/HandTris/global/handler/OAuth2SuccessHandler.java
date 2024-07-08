@@ -39,7 +39,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtUtil.createAccessToken(nickname);
         System.out.println("accessToken = " + accessToken);
 
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "oauth2/loginSuccess")
+        
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "/oauth2/loginSuccess")
                 .queryParam("access", accessToken)
                 .build()
                 .encode(StandardCharsets.UTF_8)
