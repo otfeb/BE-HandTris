@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface GameRoomRepository extends Repository<GameRoom, Long> {
 
-    @Query("SELECT g FROM GameRoom g WHERE g.participantCount < g.participantLimit AND g.gameStatus != 'PLAYING' ")
+    @Query("SELECT g FROM GameRoom g WHERE g.participantCount < g.participantLimit")
     List<GameRoom> findAllByGameStatusNotPlaying();
 
     Optional<GameRoom> findById(Long id);

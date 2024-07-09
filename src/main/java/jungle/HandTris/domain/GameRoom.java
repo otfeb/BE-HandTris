@@ -28,17 +28,12 @@ public class GameRoom {
     @Column(nullable = false)
     private UUID roomCode;
 
-    @Column(nullable = false)
-    @Enumerated(value = EnumType.STRING)
-    private GameStatus gameStatus;
-
     public GameRoom(String creator, String title) {
         this.title = title;
         this.creator = creator;
         this.participantCount = 1;
         this.participantLimit = 2;
         this.roomCode = UUID.randomUUID();
-        this.gameStatus = GameStatus.NON_PLAYING;
     }
 
     public void enter() {

@@ -1,7 +1,6 @@
 package jungle.HandTris.presentation.dto.response;
 
 import jungle.HandTris.domain.GameRoom;
-import jungle.HandTris.domain.GameStatus;
 
 import java.util.UUID;
 
@@ -11,8 +10,7 @@ public record GameRoomDetailRes(
         String creator,
         long participantCount,
         long participantLimit,
-        UUID roomCode,
-        GameStatus gameStatus
+        UUID roomCode
 ) {
     public GameRoomDetailRes(GameRoom gameRoom) {
         this(gameRoom.getId(),
@@ -20,7 +18,6 @@ public record GameRoomDetailRes(
                 gameRoom.getCreator(),
                 gameRoom.getParticipantCount(),
                 gameRoom.getParticipantLimit(),
-                gameRoom.getRoomCode(),
-                gameRoom.getGameStatus());
+                gameRoom.getRoomCode());
     }
 }
