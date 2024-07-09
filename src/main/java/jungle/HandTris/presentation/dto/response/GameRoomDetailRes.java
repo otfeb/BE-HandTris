@@ -5,7 +5,6 @@ import jungle.HandTris.domain.GameRoom;
 import java.util.UUID;
 
 public record GameRoomDetailRes(
-        long id,
         String title,
         String creator,
         long participantCount,
@@ -13,7 +12,7 @@ public record GameRoomDetailRes(
         UUID roomCode
 ) {
     public GameRoomDetailRes(GameRoom gameRoom) {
-        this(gameRoom.getId(),
+        this(
                 gameRoom.getTitle(),
                 gameRoom.getCreator(),
                 gameRoom.getParticipantCount(),
