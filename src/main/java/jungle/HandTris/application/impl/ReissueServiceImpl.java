@@ -14,7 +14,7 @@ public class ReissueServiceImpl implements ReissueService {
 
     private final JWTUtil jwtUtil;
 
-    public String reissue (HttpServletRequest request) {
+    public ReissueTokenRes reissue (HttpServletRequest request) {
         String refreshToken = jwtUtil.resolveRefreshToken(request);
 
         //토큰 소멸 시간 검증
