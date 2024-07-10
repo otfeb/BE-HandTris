@@ -71,7 +71,6 @@ public class MemberRecordServiceImpl implements MemberRecordService {
 
         // 본인 전적
         Optional<Member> member = memberRepository.findByNickname(nickname);
-        System.out.println(member.get().getNickname() + "--------------------------------------------");
         if (member.isEmpty()) {
             throw new MemberNotFoundException();
         }
@@ -93,7 +92,6 @@ public class MemberRecordServiceImpl implements MemberRecordService {
         // 상대가 있을 경우
         else {
             Optional<Member> otherMember = memberRepository.findByNickname(otherUser.get().nickname());
-            System.out.println(otherMember.get().getNickname() + "--------------------------------------------");
             if (otherMember.isEmpty()) {
                 throw new MemberNotFoundException();
             }
