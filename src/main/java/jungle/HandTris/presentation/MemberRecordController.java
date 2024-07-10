@@ -49,5 +49,11 @@ public class MemberRecordController {
         return ResponseEnvelope.of(participantResList);
     }
 
+    @GetMapping
+    public ResponseEnvelope<MemberRecordDetailRes> getMyRecord(@UserNicknameFromJwt String nickname) {
+        MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
+        MemberRecordDetailRes memberRecordDetailRes = new MemberRecordDetailRes(memberRecord);
+        return ResponseEnvelope.of(memberRecordDetailRes);
+    }
 
 }
