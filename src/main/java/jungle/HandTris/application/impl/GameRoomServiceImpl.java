@@ -7,11 +7,9 @@ import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.application.service.MemberProfileService;
 import jungle.HandTris.domain.GameMember;
 import jungle.HandTris.domain.GameRoom;
-import jungle.HandTris.domain.GameStatus;
 import jungle.HandTris.domain.exception.GameRoomNotFoundException;
 import jungle.HandTris.domain.exception.MemberNotFoundException;
 import jungle.HandTris.domain.exception.ParticipantLimitedException;
-import jungle.HandTris.domain.exception.PlayingGameException;
 import jungle.HandTris.domain.repo.GameRoomRepository;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.GameMemberEssentialDTO;
@@ -23,7 +21,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -40,16 +37,6 @@ public class GameRoomServiceImpl implements GameRoomService {
     @Override
     public List<GameRoom> getGameRoomList() {
         return gameRoomRepository.findAllByGameStatusNotPlaying();
-    }
-
-    @Override
-    public GameMember getGameRoom(String roomCode) {
-        String gameRoomKey = GAME_MEMBER_KEY_PREFIX + roomCode;
-        String gameMemberGen = redisTemplate.opsForValue().get(gameRoomKey);
-
-        GameMember gameMember = generateGameMember(gameMemberGen);
-
-        return gameMember;
     }
 
     @Override
@@ -70,10 +57,6 @@ public class GameRoomServiceImpl implements GameRoomService {
     public GameRoom enterGameRoom(@UserNicknameFromJwt String nickname, String roomCode) {
         GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode)).orElseThrow(GameRoomNotFoundException::new);
 
-        if (gameRoom.getGameStatus() == GameStatus.PLAYING) {
-            throw new PlayingGameException();
-        }
-
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
 
         if (gameRoom.getParticipantCount() == gameRoom.getParticipantLimit()) {
@@ -83,7 +66,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         gameRoom.enter();
 
         // Redis에 매핑 정보 업데이트
-        System.out.println(GAME_MEMBER_KEY_PREFIX + roomCode);
         String gameKey = GAME_MEMBER_KEY_PREFIX + roomCode;
         String gameMemberGen = redisTemplate.opsForValue().get(gameKey);
         GameMember gameMember = generateGameMember(gameMemberGen);
@@ -98,9 +80,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode))
                 .orElseThrow(GameRoomNotFoundException::new);
 
-        if (gameRoom.getGameStatus() == GameStatus.PLAYING) {
-            throw new PlayingGameException();
-        }
         gameRoom.exit();
 
         String key = GAME_MEMBER_KEY_PREFIX + roomCode;
@@ -143,13 +122,5 @@ public class GameRoomServiceImpl implements GameRoomService {
             e.printStackTrace();
         }
         throw new MemberNotFoundException();
-    }
-
-    @Override
-    public boolean isGameRoomPlaying(String roomCode) {
-        Optional<GameRoom> foundGameRoom = gameRoomRepository.findByRoomCode(UUID.fromString(roomCode));
-        if (foundGameRoom.isEmpty())
-            throw new GameRoomNotFoundException();
-        return GameStatus.PLAYING.equals(foundGameRoom.get().getGameStatus());
     }
 }
