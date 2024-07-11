@@ -60,7 +60,7 @@ public class TetrisController {
         if (isStart) {
             String[][] emptyBoard = {{}};
             // 탈주 유저의 상대에게 승리 메세지 보내기 ------------------------------
-            TetrisMessageReq win = new TetrisMessageReq(emptyBoard, true, false);
+            TetrisMessageReq win = new TetrisMessageReq(emptyBoard, true, false, false);
             String otherUser = headerAccessor.getHeader("otherUser").toString();
             messagingTemplate.convertAndSendToUser(otherUser, "queue/tetris/" + roomCode, win);
         }
