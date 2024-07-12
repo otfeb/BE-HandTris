@@ -1,7 +1,7 @@
 spring:
   security:
     oauth2:
-      redirect-uri: http://localhost:8080
+      redirect-uri: http://localhost:3000
       client:
         temppassword: ENC(kof7KM9iTyWvb6wVueqmEGZjOyPFRA7+mwS7ioUOOd5fGyahPdVrFA==)
         registration:
