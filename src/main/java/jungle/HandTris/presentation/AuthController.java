@@ -44,7 +44,7 @@ public class AuthController {
         return ResponseEnvelope.of(memberDetailResWithTokenRes);
     }
 
-    @GetMapping("/signout")
+    @PostMapping("/signout")
     public ResponseEnvelope<String> signout(HttpServletRequest request) {
         authService.signout(request);
 
