@@ -6,7 +6,6 @@ import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.global.dto.ResponseEnvelope;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.GameResultReq;
-import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import jungle.HandTris.presentation.dto.response.ParticipantRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -22,20 +21,27 @@ public class MemberRecordController {
 
     private final MemberRecordService memberRecordService;
 
-    @GetMapping("/{nickname}")
-    public ResponseEnvelope<MemberRecordDetailRes> getMemberRecord(@PathVariable("nickname") String nickname) {
+    @GetMapping
+    public ResponseEnvelope<ParticipantRes> getMyRecord(@UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        MemberRecordDetailRes memberRecordDetailRes = new MemberRecordDetailRes(memberRecord);
-        return ResponseEnvelope.of(memberRecordDetailRes);
+        ParticipantRes participantRes = new ParticipantRes(memberRecord);
+        return ResponseEnvelope.of(participantRes);
     }
 
     @PutMapping
-    public ResponseEnvelope<MemberRecordDetailRes> updateMemberRecord(@Valid @RequestBody GameResultReq gameResultReq, @UserNicknameFromJwt String nickname) {
+    public ResponseEnvelope<ParticipantRes> updateMemberRecord(@Valid @RequestBody GameResultReq gameResultReq, @UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.updateMemberRecord(gameResultReq, nickname);
-        MemberRecordDetailRes memberRecordDetailRes = new MemberRecordDetailRes(memberRecord);
-        return ResponseEnvelope.of(memberRecordDetailRes);
+        ParticipantRes participantRes = new ParticipantRes(memberRecord);
+        return ResponseEnvelope.of(participantRes);
     }
 
+    @GetMapping("/{nickname}")
+    public ResponseEnvelope<ParticipantRes> getMemberRecord(@PathVariable("nickname") String nickname) {
+        MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
+        ParticipantRes participantRes = new ParticipantRes(memberRecord);
+        return ResponseEnvelope.of(participantRes);
+    }
+    
     @GetMapping("/participant/{roomCode}")
     public ResponseEnvelope<List<ParticipantRes>> getParticipants(@PathVariable("roomCode") String roomCode, @UserNicknameFromJwt String nickname) {
         List<MemberRecord> participantsMemberRecord = memberRecordService.getParticipants(roomCode, nickname);
@@ -47,12 +53,5 @@ public class MemberRecordController {
             participantResList.add(participantRes);
         }
         return ResponseEnvelope.of(participantResList);
-    }
-
-    @GetMapping
-    public ResponseEnvelope<ParticipantRes> getMyRecord(@UserNicknameFromJwt String nickname) {
-        MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        ParticipantRes participantRes = new ParticipantRes(memberRecord);
-        return ResponseEnvelope.of(participantRes);
     }
 }

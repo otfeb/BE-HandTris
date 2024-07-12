@@ -10,7 +10,6 @@ import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import lombok.RequiredArgsConstructor;
@@ -45,25 +44,6 @@ public class MemberProfileServiceImpl implements MemberProfileService {
     }
 
     @Override
-    public Pair<MemberProfileDetailsRes, MemberRecordDetailRes> myPage(HttpServletRequest request, String username) {
-        String token = jwtUtil.resolveAccessToken(request);
-        String nickname = jwtUtil.getNickname(token);
-        Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(MemberNotFoundException::new);
-
-        // 요청한 유저와 토큰의 주인이 같은지 검증
-        if (!username.equals(member.getUsername())) {
-            throw new UnauthorizedAccessException();
-        }
-
-        MemberProfileDetailsRes memberInfoDetails = new MemberProfileDetailsRes(member.getNickname(), member.getProfileImageUrl());
-        MemberRecordDetailRes memberRecordDetails = new MemberRecordDetailRes(memberRecordService.getMemberRecord(member.getNickname()));
-
-        return Pair.of(memberInfoDetails, memberRecordDetails);
-    }
-
-
-    @Override
     public MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage, String username) {
 
         Boolean nicknameChanged = false;
@@ -72,10 +52,6 @@ public class MemberProfileServiceImpl implements MemberProfileService {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(MemberNotFoundException::new);
 
-        // 요청한 유저와 토큰의 주인이 같은지 검증
-        if (!username.equals(member.getUsername())) {
-            throw new UnauthorizedAccessException();
-        }
 
         // 변경할 닉네임이 있을 경우에만 업데이트
         if (memberUpdateReq.nickname() != null && !memberUpdateReq.nickname().isEmpty()) {

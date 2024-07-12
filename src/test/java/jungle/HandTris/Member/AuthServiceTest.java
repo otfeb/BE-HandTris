@@ -12,7 +12,6 @@ import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import org.assertj.core.api.Assertions;
@@ -309,13 +308,14 @@ public class AuthServiceTest {
             MemberRecordDetailRes memberRecordDetailRes = new MemberRecordDetailRes(memberRecord);
 
             // when
-            Pair<MemberProfileDetailsRes, MemberRecordDetailRes> profileResult =
-                    memberProfileService.myPage(request, member.getUsername());
-
-            // then
-            Assertions.assertThat(profileResult.getFirst().nickname()).isEqualTo(member.getNickname());
-            Assertions.assertThat(profileResult.getFirst().profileImageUrl()).isEqualTo(member.getProfileImageUrl());
-            Assertions.assertThat(profileResult.getSecond()).isEqualTo(memberRecordDetailRes);
+            // todo : myPage 함수 삭제됨
+//            Pair<MemberProfileDetailsRes, MemberRecordDetailRes> profileResult =
+//                    memberProfileService.myPage(request, member.getUsername());
+//
+//            // then
+//            Assertions.assertThat(profileResult.getFirst().nickname()).isEqualTo(member.getNickname());
+//            Assertions.assertThat(profileResult.getFirst().profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+//            Assertions.assertThat(profileResult.getSecond()).isEqualTo(memberRecordDetailRes);
         }
 
         @Test
@@ -330,9 +330,10 @@ public class AuthServiceTest {
             request.addHeader("Authorization", "Bearer " + token);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> {
-                Pair<MemberProfileDetailsRes, MemberRecordDetailRes> result = memberProfileService.myPage(request, "user2");
-            }).isInstanceOf(UnauthorizedAccessException.class);
+            // todo : myPage 함수 삭제됨
+//            Assertions.assertThatThrownBy(() -> {
+//                Pair<MemberProfileDetailsRes, MemberRecordDetailRes> result = memberProfileService.myPage(request, "user2");
+//            }).isInstanceOf(UnauthorizedAccessException.class);
         }
     }
 
