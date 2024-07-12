@@ -47,14 +47,14 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable()
                 )
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/", "/auth/signin", "/auth/signup","/reissue/**", "/oauth2/loginSuccess").permitAll()
+                        .requestMatchers("/", "/auth/signin", "/auth/signup", "/reissue/**", "/oauth2/loginSuccess", "ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(Customizer.withDefaults()
                 )
                 .oauth2Login((oauth2) -> oauth2
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                            .userService(customOAuth2MemberService))
+                                .userService(customOAuth2MemberService))
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler)
                 )
