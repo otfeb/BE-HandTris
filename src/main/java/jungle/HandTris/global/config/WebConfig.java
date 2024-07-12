@@ -29,7 +29,7 @@ public class WebConfig implements WebMvcConfigurer {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:3000", "https://handtris.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("content-type", "authorization", "x-requested-with")
+                        .allowedHeaders("content-type", "Authorization", "Authorization-Refresh", "x-requested-with")
                         .exposedHeaders("Set-Cookie")
 //                        .exposedHeaders("content-type", "x-requested-with")
                         .allowCredentials(true);
