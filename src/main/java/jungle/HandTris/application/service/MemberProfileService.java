@@ -10,5 +10,5 @@ import org.springframework.web.multipart.MultipartFile;
 public interface MemberProfileService {
     Pair<String, MemberRecordDetailRes> getMemberProfileWithStatsByNickname(String nickname);
 
-    MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage, String username);
+    MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage);
 }

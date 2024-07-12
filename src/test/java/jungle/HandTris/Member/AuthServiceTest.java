@@ -366,7 +366,7 @@ public class AuthServiceTest {
 
                 // when
                 MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, null, false, member.getUsername());
+                        request, changeNickname, null, false);
 
                 // then
                 Assertions.assertThat(changeMemberProfile.nickname()).isEqualTo(member.getNickname());
@@ -391,7 +391,7 @@ public class AuthServiceTest {
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
                     memberProfileService.updateMemberProfile(
-                            request, changeNickname, null, null, member.getUsername());
+                            request, changeNickname, null, null);
                 }).isInstanceOf(NicknameNotChangedException.class);
             }
 
@@ -415,7 +415,7 @@ public class AuthServiceTest {
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
                     memberProfileService.updateMemberProfile(
-                            request, changeNickname, null, null, member.getUsername());
+                            request, changeNickname, null, null);
                 }).isInstanceOf(DuplicateNicknameException.class);
             }
         }
@@ -453,7 +453,7 @@ public class AuthServiceTest {
 
                 // when
                 MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, changeProfileImage, false, member.getUsername());
+                        request, changeNickname, changeProfileImage, false);
 
                 // then
                 Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
@@ -482,13 +482,13 @@ public class AuthServiceTest {
                 );
 
                 MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, changeProfileImage, false, member.getUsername());
+                        request, changeNickname, changeProfileImage, false);
 
                 Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
 
                 // when
                 memberProfileService.updateMemberProfile(
-                        request, changeNickname, null, true, member.getUsername());
+                        request, changeNickname, null, true);
                 // then
                 Assertions.assertThat(defaultImage).isEqualTo(member.getProfileImageUrl());
             }
@@ -518,7 +518,7 @@ public class AuthServiceTest {
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
                     memberProfileService.updateMemberProfile(
-                            request, changeNickname, changeProfileImage, false, member.getUsername());
+                            request, changeNickname, changeProfileImage, false);
                 }).isInstanceOf(InvalidImageTypeException.class);
             }
 
@@ -551,7 +551,7 @@ public class AuthServiceTest {
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
                     memberProfileService.updateMemberProfile(
-                            request, changeNickname, changeProfileImage, false, member.getUsername());
+                            request, changeNickname, changeProfileImage, false);
                 }).isInstanceOf(InvalidImageTypeException.class);
             }
         }

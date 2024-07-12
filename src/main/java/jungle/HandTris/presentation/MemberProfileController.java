@@ -21,22 +21,22 @@ public class MemberProfileController {
     private final MemberProfileService memberProfileService;
     private final MemberRecordService memberRecordService;
 
-    @GetMapping("/{username}/mypage")
+    @GetMapping("/mypage")
     public ResponseEnvelope<ParticipantRes> myPage(@UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
         ParticipantRes participantRes = new ParticipantRes(memberRecord);
         return ResponseEnvelope.of(participantRes);
     }
 
-    @PatchMapping("/{username}/mypage")
+    @PatchMapping("/mypage")
     public ResponseEnvelope<MemberProfileUpdateDetailsRes> updateInfo(
             HttpServletRequest request,
             @Valid MemberUpdateReq memberUpdateReq,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-            @RequestParam(value = "deleteProfileImage", required = false, defaultValue = "false") boolean deleteProfileImage,
-            @PathVariable("username") String username) {
+            @RequestParam(value = "deleteProfileImage", required = false, defaultValue = "false") boolean deleteProfileImage
+    ) {
 
-        MemberProfileUpdateDetailsRes updateMemberDetails = memberProfileService.updateMemberProfile(request, memberUpdateReq, profileImage, deleteProfileImage, username);
+        MemberProfileUpdateDetailsRes updateMemberDetails = memberProfileService.updateMemberProfile(request, memberUpdateReq, profileImage, deleteProfileImage);
 
         return ResponseEnvelope.of(updateMemberDetails);
     }
