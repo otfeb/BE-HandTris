@@ -10,15 +10,14 @@ import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberDetailRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 
@@ -43,19 +42,6 @@ public class MemberProfileServiceImpl implements MemberProfileService {
         MemberRecordDetailRes memberRecordDetails = new MemberRecordDetailRes(memberRecordService.getMemberRecord(nickname));
 
         return Pair.of(profileImageUrl, memberRecordDetails);
-    }
-
-    @Override
-    public MemberDetailRes loadMemberProfileByToken(HttpServletRequest request) {
-        String accessToken = request.getHeader("Authorization").substring(7);
-
-        String nickname = jwtUtil.getNickname(accessToken);
-
-        Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(UserNotFoundException::new);
-
-        String username = member.getUsername();
-        return new MemberDetailRes(username, nickname);
     }
 
     @Override
@@ -110,7 +96,7 @@ public class MemberProfileServiceImpl implements MemberProfileService {
         if (deleteProfileImage) {
             member.updateProfileImageUrl(defaultImage);
         } else if (profileImage != null && profileImage.getSize() > 0) {
-        // 이미지가 존재하는 경우에만 업데이트
+            // 이미지가 존재하는 경우에만 업데이트
             validateImage(profileImage);
             uploadImage(profileImage, member);
         }
