@@ -5,7 +5,7 @@ import jungle.HandTris.domain.Member;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
 import org.springframework.data.util.Pair;
 
-public interface MemberService {
+public interface AuthService {
     Pair<Member, String> signin(MemberRequest memberRequest);
 
     void signup(MemberRequest memberRequest);

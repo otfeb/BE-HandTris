@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/member")
-public class MemberController {
+public class MemberProfileController {
     private final MemberProfileService memberProfileService;
 
     @GetMapping("/{username}/mypage")

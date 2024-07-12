@@ -3,16 +3,15 @@ package jungle.HandTris.Member;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import jungle.HandTris.application.service.AuthService;
 import jungle.HandTris.application.service.MemberProfileService;
 import jungle.HandTris.application.service.MemberRecordService;
-import jungle.HandTris.application.service.MemberService;
 import jungle.HandTris.domain.Member;
 import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberDetailRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
@@ -28,20 +27,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Set;
 
 @SpringBootTest
 @Transactional
-public class MemberServiceTest {
+public class AuthServiceTest {
 
-    @Autowired MemberService memberService;
-    @Autowired MemberProfileService memberProfileService;
-    @Autowired MemberRecordService memberRecordService;
-    @Autowired MemberRepository memberRepository;
-    @Autowired BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Autowired private Validator validator;
+    @Autowired
+    AuthService authService;
+    @Autowired
+    MemberProfileService memberProfileService;
+    @Autowired
+    MemberRecordService memberRecordService;
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    private Validator validator;
 
     @Nested
     @DisplayName("회원 가입")
@@ -54,13 +56,12 @@ public class MemberServiceTest {
             MemberRequest member = new MemberRequest("user1", "1q2w3e4r!", "user1");
 
             // when
-            memberService.signup(member);
+            authService.signup(member);
 
             // then
             Member findMember = memberRepository.findByUsername(member.username());
 
             Assertions.assertThat(findMember.getUsername()).isEqualTo(member.username());
-            Assertions.assertThat(bCryptPasswordEncoder.matches(member.password(), findMember.getPassword())).isTrue();
             Assertions.assertThat(findMember.getNickname()).isEqualTo(member.nickname());
 
         }
@@ -72,15 +73,15 @@ public class MemberServiceTest {
             @Test
             @DisplayName("중복 Username")
             public void testSignupFailWithDuplicateUsername() {
-            // given
-            MemberRequest member1 = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            MemberRequest member2 = new MemberRequest("user1", "1q2w3e4r!", "user2");
-            memberService.signup(member1);
+                // given
+                MemberRequest member1 = new MemberRequest("user1", "1q2w3e4r!", "user1");
+                MemberRequest member2 = new MemberRequest("user1", "1q2w3e4r!", "user2");
+                authService.signup(member1);
 
-            // when & then
+                // when & then
 
-            Assertions.assertThatThrownBy(() -> memberService.signup(member2))
-                    .isInstanceOf(DuplicateUsernameException.class);
+                Assertions.assertThatThrownBy(() -> authService.signup(member2))
+                        .isInstanceOf(DuplicateUsernameException.class);
             }
 
             @Test
@@ -165,11 +166,11 @@ public class MemberServiceTest {
                 // given
                 MemberRequest member1 = new MemberRequest("user1", "1q2w3e4r!", "user1");
                 MemberRequest member2 = new MemberRequest("user2", "1q2w3e4r!", "user1");
-                memberService.signup(member1);
+                authService.signup(member1);
 
                 // when & then
 
-                Assertions.assertThatThrownBy(() -> memberService.signup(member2))
+                Assertions.assertThatThrownBy(() -> authService.signup(member2))
                         .isInstanceOf(DuplicateNicknameException.class);
 
             }
@@ -217,7 +218,7 @@ public class MemberServiceTest {
             }
 
             @ParameterizedTest
-            @ValueSource(strings ={"admin", "administator", "useradmin", "adminuser"})
+            @ValueSource(strings = {"admin", "administator", "useradmin", "adminuser"})
             @DisplayName("admin 작성된 Nickname")
             public void testSignupFailWithAdminNickname(String nickname) {
                 // given
@@ -243,10 +244,10 @@ public class MemberServiceTest {
         public void testLoginSuccess() {
             // given
             MemberRequest member = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            memberService.signup(member);
+            authService.signup(member);
 
             // when
-            Pair<Member, String> result = memberService.signin(member);
+            Pair<Member, String> result = authService.signin(member);
 
             // then
             Assertions.assertThat(result).isNotNull();
@@ -266,7 +267,7 @@ public class MemberServiceTest {
             MemberRequest member = new MemberRequest("user1", "1q2w3e4r!", "user1");
 
             // when & then
-            Assertions.assertThatThrownBy(() -> memberService.signin(member))
+            Assertions.assertThatThrownBy(() -> authService.signin(member))
                     .isInstanceOf(UserNotFoundException.class);
 
         }
@@ -276,12 +277,12 @@ public class MemberServiceTest {
         public void testLoginFailWithIncorrectPassword() {
             // given
             MemberRequest member = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            memberService.signup(member);
+            authService.signup(member);
 
 
             // when
             MemberRequest incorrectMember = new MemberRequest("user1", "wrongPassword", "user1");
-            Assertions.assertThatThrownBy(() -> memberService.signin(incorrectMember))
+            Assertions.assertThatThrownBy(() -> authService.signin(incorrectMember))
                     .isInstanceOf(PasswordMismatchException.class);
             // then
 
@@ -293,11 +294,11 @@ public class MemberServiceTest {
     class MyPage {
         @Test
         @DisplayName("정상 마이페이지 호출")
-        public void testMyPageSuccess () {
+        public void testMyPageSuccess() {
             // given
             MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            memberService.signup(requestMember);
-            Pair<Member, String> SigninResult = memberService.signin(requestMember);
+            authService.signup(requestMember);
+            Pair<Member, String> SigninResult = authService.signin(requestMember);
             Member member = SigninResult.getFirst();
             String token = SigninResult.getSecond();
 
@@ -319,46 +320,26 @@ public class MemberServiceTest {
 
         @Test
         @DisplayName("A유저가 B유저의 마이페이지 호출")
-        public void testMyPageConnectWrongUser () {
+        public void testMyPageConnectWrongUser() {
             // given
             MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            memberService.signup(requestMember);
-            String token = memberService.signin(requestMember).getSecond();
+            authService.signup(requestMember);
+            String token = authService.signin(requestMember).getSecond();
 
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.addHeader("Authorization", "Bearer " + token);
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                        Pair<MemberProfileDetailsRes, MemberRecordDetailRes> result = memberProfileService.myPage(request, "user2");
-                    }).isInstanceOf(UnauthorizedAccessException.class);
+                Pair<MemberProfileDetailsRes, MemberRecordDetailRes> result = memberProfileService.myPage(request, "user2");
+            }).isInstanceOf(UnauthorizedAccessException.class);
         }
     }
 
     @Nested
     @DisplayName("회원 정보 요청")
     class GetMemberProfile {
-        @Test
-        @DisplayName("회원 정보 요청")
-        public void testLoadMemberProfileByTokenSuccess () {
-            // given
-            MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-            memberService.signup(requestMember);
-            Pair<Member, String> SigninResult = memberService.signin(requestMember);
-            Member member = SigninResult.getFirst();
-            String token = SigninResult.getSecond();
 
-            MockHttpServletRequest request = new MockHttpServletRequest();
-            request.addHeader("Authorization", "Bearer " + token);
-
-            // when
-            MemberDetailRes profileResult =
-                    memberProfileService.loadMemberProfileByToken(request);
-
-            // then
-            Assertions.assertThat(profileResult.nickname()).isEqualTo(member.getNickname());
-            Assertions.assertThat(profileResult.username()).isEqualTo(member.getUsername());
-        }
     }
 
     @Nested
@@ -369,11 +350,11 @@ public class MemberServiceTest {
         class ChangeMemberNickname {
             @Test
             @DisplayName("정상 닉네임 변경")
-            public void testChangeMemberNicknameSuccess () {
+            public void testChangeMemberNicknameSuccess() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -396,8 +377,8 @@ public class MemberServiceTest {
             public void testChangeMemberNicknameWithSameNickname() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -408,9 +389,9 @@ public class MemberServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                        memberProfileService.updateMemberProfile(
-                                request, changeNickname, null, null, member.getUsername());
-                        }).isInstanceOf(NicknameNotChangedException.class);
+                    memberProfileService.updateMemberProfile(
+                            request, changeNickname, null, null, member.getUsername());
+                }).isInstanceOf(NicknameNotChangedException.class);
             }
 
             @Test
@@ -419,9 +400,9 @@ public class MemberServiceTest {
                 // given
                 MemberRequest requestMember1 = new MemberRequest("user1", "1q2w3e4r!", "user1");
                 MemberRequest requestMember2 = new MemberRequest("user2", "1q2w3e4r!", "user2");
-                memberService.signup(requestMember1);
-                memberService.signup(requestMember2);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember1);
+                authService.signup(requestMember1);
+                authService.signup(requestMember2);
+                Pair<Member, String> SigninResult = authService.signin(requestMember1);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -432,9 +413,9 @@ public class MemberServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                        memberProfileService.updateMemberProfile(
-                                request, changeNickname, null, null, member.getUsername());
-                    }).isInstanceOf(DuplicateNicknameException.class);
+                    memberProfileService.updateMemberProfile(
+                            request, changeNickname, null, null, member.getUsername());
+                }).isInstanceOf(DuplicateNicknameException.class);
             }
         }
 
@@ -447,11 +428,11 @@ public class MemberServiceTest {
 
             @Test
             @DisplayName("정상 프로필 사진 변경")
-            public void testChangeMemberProfileImageSuccess () {
+            public void testChangeMemberProfileImageSuccess() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -479,11 +460,11 @@ public class MemberServiceTest {
 
             @Test
             @DisplayName("정상 프로필 사진 제거")
-            public void testChangeMemberDefaultProfileImageSuccess () {
+            public void testChangeMemberDefaultProfileImageSuccess() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -516,8 +497,8 @@ public class MemberServiceTest {
             public void testChangeMemberNicknameWithSameNickname() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
@@ -545,8 +526,8 @@ public class MemberServiceTest {
             public void testChangeMemberNicknameWithDuplicateNickname() {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
-                memberService.signup(requestMember);
-                Pair<Member, String> SigninResult = memberService.signin(requestMember);
+                authService.signup(requestMember);
+                Pair<Member, String> SigninResult = authService.signin(requestMember);
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
