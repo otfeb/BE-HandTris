@@ -6,7 +6,7 @@ import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.global.dto.ResponseEnvelope;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.GameResultReq;
-import jungle.HandTris.presentation.dto.response.ParticipantRes;
+import jungle.HandTris.presentation.dto.response.MemberProfileRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,36 +22,36 @@ public class MemberRecordController {
     private final MemberRecordService memberRecordService;
 
     @GetMapping
-    public ResponseEnvelope<ParticipantRes> getMyRecord(@UserNicknameFromJwt String nickname) {
+    public ResponseEnvelope<MemberProfileRes> getMyRecord(@UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        ParticipantRes participantRes = new ParticipantRes(memberRecord);
-        return ResponseEnvelope.of(participantRes);
+        MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
+        return ResponseEnvelope.of(memberProfileRes);
     }
 
     @PutMapping
-    public ResponseEnvelope<ParticipantRes> updateMemberRecord(@Valid @RequestBody GameResultReq gameResultReq, @UserNicknameFromJwt String nickname) {
+    public ResponseEnvelope<MemberProfileRes> updateMemberRecord(@Valid @RequestBody GameResultReq gameResultReq, @UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.updateMemberRecord(gameResultReq, nickname);
-        ParticipantRes participantRes = new ParticipantRes(memberRecord);
-        return ResponseEnvelope.of(participantRes);
+        MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
+        return ResponseEnvelope.of(memberProfileRes);
     }
 
     @GetMapping("/{nickname}")
-    public ResponseEnvelope<ParticipantRes> getMemberRecord(@PathVariable("nickname") String nickname) {
+    public ResponseEnvelope<MemberProfileRes> getMemberRecord(@PathVariable("nickname") String nickname) {
         MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        ParticipantRes participantRes = new ParticipantRes(memberRecord);
-        return ResponseEnvelope.of(participantRes);
+        MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
+        return ResponseEnvelope.of(memberProfileRes);
     }
-    
+
     @GetMapping("/participant/{roomCode}")
-    public ResponseEnvelope<List<ParticipantRes>> getParticipants(@PathVariable("roomCode") String roomCode, @UserNicknameFromJwt String nickname) {
+    public ResponseEnvelope<List<MemberProfileRes>> getParticipants(@PathVariable("roomCode") String roomCode, @UserNicknameFromJwt String nickname) {
         List<MemberRecord> participantsMemberRecord = memberRecordService.getParticipants(roomCode, nickname);
-        List<ParticipantRes> participantResList = new ArrayList<>();
+        List<MemberProfileRes> memberProfileResList = new ArrayList<>();
         for (MemberRecord memberRecord : participantsMemberRecord) {
             if (memberRecord == null)
                 continue;
-            ParticipantRes participantRes = new ParticipantRes(memberRecord);
-            participantResList.add(participantRes);
+            MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
+            memberProfileResList.add(memberProfileRes);
         }
-        return ResponseEnvelope.of(participantResList);
+        return ResponseEnvelope.of(memberProfileResList);
     }
 }

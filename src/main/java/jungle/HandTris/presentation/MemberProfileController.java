@@ -8,8 +8,8 @@ import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.global.dto.ResponseEnvelope;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
+import jungle.HandTris.presentation.dto.response.MemberProfileRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
-import jungle.HandTris.presentation.dto.response.ParticipantRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,10 +22,10 @@ public class MemberProfileController {
     private final MemberRecordService memberRecordService;
 
     @GetMapping("/mypage")
-    public ResponseEnvelope<ParticipantRes> myPage(@UserNicknameFromJwt String nickname) {
+    public ResponseEnvelope<MemberProfileRes> myPage(@UserNicknameFromJwt String nickname) {
         MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        ParticipantRes participantRes = new ParticipantRes(memberRecord);
-        return ResponseEnvelope.of(participantRes);
+        MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
+        return ResponseEnvelope.of(memberProfileRes);
     }
 
     @PatchMapping("/mypage")

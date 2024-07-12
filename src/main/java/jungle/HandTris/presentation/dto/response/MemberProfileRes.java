@@ -4,14 +4,14 @@ import jungle.HandTris.domain.MemberRecord;
 
 import java.math.BigDecimal;
 
-public record ParticipantRes(
+public record MemberProfileRes(
         String nickname,
         String profileImageUrl,
         long win,
         long lose,
         BigDecimal winRate
 ) {
-    public ParticipantRes(MemberRecord memberRecord) {
+    public MemberProfileRes(MemberRecord memberRecord) {
         this(
                 memberRecord.getMember().getNickname(),
                 memberRecord.getMember().getProfileImageUrl(),
