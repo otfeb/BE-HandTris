@@ -28,7 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:3000", "https://handtris.vercel.app")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("content-type", "Authorization", "Authorization-Refresh", "x-requested-with")
                         .exposedHeaders("Set-Cookie")
 //                        .exposedHeaders("content-type", "x-requested-with")
