@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jungle.HandTris.domain.Member;
+import jungle.HandTris.domain.exception.AccessTokenExpiredException;
+import jungle.HandTris.domain.exception.InvalidTokenFormatException;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.response.CustomMemberDetails;
 import lombok.RequiredArgsConstructor;
@@ -33,11 +35,17 @@ public class JWTFilter extends OncePerRequestFilter {
 
         //토큰 소멸 시간 검증
         if (jwtUtil.isExpired(token)) {
-            filterChain.doFilter(request, response);
-            return;
+            throw new AccessTokenExpiredException();
         }
 
-        //토큰에서 username과 role 획득
+        // 토큰이 access인지 확인 (발급시 페이로드에 명시)
+        String subject = jwtUtil.getSubject(token);
+
+        if (!subject.equals("AccessToken")) {
+            throw new InvalidTokenFormatException();
+        }
+
+        //토큰에서 nickname 획득
         String nickname = jwtUtil.getNickname(token);
 
         //userEntity를 생성하여 값 set

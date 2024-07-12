@@ -47,7 +47,8 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable()
                 )
                 .authorizeHttpRequests((auth) -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers("/", "/auth/signin", "/auth/signup","/reissue/**", "/oauth2/loginSuccess").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .cors(Customizer.withDefaults()
                 )
@@ -74,8 +75,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://handtris.vercel.app"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("content-type", "authorization", "x-requested-with"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("content-type", "Authorization", "Authorization-Refresh", "x-requested-with"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));

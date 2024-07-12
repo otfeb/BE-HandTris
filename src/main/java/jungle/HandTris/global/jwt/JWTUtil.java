@@ -88,7 +88,7 @@ public class JWTUtil {
     }
 
     // Refresh 토큰 생성
-    public String createRefreshToken() {
+    public String createRefreshToken(String nickname) {
         Date now = new Date();
 
         return Jwts.builder()
@@ -96,8 +96,10 @@ public class JWTUtil {
                             .type("JWT")
                         .and()
                         .subject(refreshSubject)
+                        .claim("nickname", nickname)
                         .issuedAt(now)
                         .expiration(new Date(now.getTime() + validityInMillisecondsRefresh))
+                        .issuer(issuer)
                         .signWith(secretKey)
                         .compact();
     }
@@ -111,6 +113,16 @@ public class JWTUtil {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("nickname", String.class);
+    }
+
+    public String getSubject(String token) {
+
+        return Jwts.parser().
+                verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     public Boolean isExpired(String token) {

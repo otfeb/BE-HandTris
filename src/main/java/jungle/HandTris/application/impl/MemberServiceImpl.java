@@ -43,7 +43,7 @@ public class MemberServiceImpl implements MemberService {
         }
 
         String accessToken = jwtUtil.createAccessToken(member.getNickname());
-        String refreshToken = jwtUtil.createRefreshToken();
+        String refreshToken = jwtUtil.createRefreshToken(member.getNickname());
 
         member.updateRefreshToken(refreshToken);
         memberRepository.save(member);
@@ -78,13 +78,13 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void signout(HttpServletRequest request) {
-        String accessToken = jwtUtil.resolveAccessToken(request);
+        String refreshToken = jwtUtil.resolveRefreshToken(request);
 
-        if (jwtUtil.isExpired(accessToken)) {
-            throw new AccessTokenExpiredException();
+        if (jwtUtil.isExpired(refreshToken)) {
+            throw new RefreshTokenExpiredException();
         }
 
-        String nickname = jwtUtil.getNickname(accessToken);
+        String nickname = jwtUtil.getNickname(refreshToken);
 
         memberRepository.findByNickname(nickname)
                 .ifPresent(Member::deleteRefreshToken);

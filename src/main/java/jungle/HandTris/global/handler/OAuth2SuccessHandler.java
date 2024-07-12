@@ -1,10 +1,10 @@
 package jungle.HandTris.global.handler;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jungle.HandTris.domain.Member;
+import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.response.CustomOAuth2Member;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
+    private final MemberRepository memberRepository;
 
     @Value("${spring.security.oauth2.redirect-uri}")
     String redirectUrl;
@@ -37,10 +38,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String nickname = member.getNickname();
 
         String accessToken = jwtUtil.createAccessToken(nickname);
-        System.out.println("accessToken = " + accessToken);
+        String refreshToken = jwtUtil.createRefreshToken(nickname);
 
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "oauth2/loginSuccess")
+        member.updateRefreshToken(refreshToken);
+        memberRepository.save(member);
+
+
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl + "/oauth2/loginSuccess")
                 .queryParam("access", accessToken)
+                .queryParam("refresh", refreshToken)
                 .build()
                 .encode(StandardCharsets.UTF_8)
                 .toUriString();
