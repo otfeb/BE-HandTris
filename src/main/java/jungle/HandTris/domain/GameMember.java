@@ -38,12 +38,16 @@ public class GameMember {
         this.members.add(dto);
     }
 
-    public void removeMember(GameMemberEssentialDTO dto) {
-        this.members.remove(dto);
+    public void removeMember(String nickname) {
+
+        GameMemberEssentialDTO foundDTO = this.members.stream().filter(gameMemberEssentialDTO -> gameMemberEssentialDTO.nickname().equals(nickname)).findAny().orElse(null);
+        this.members.remove(foundDTO);
     }
 
-    public boolean isPresentMember(GameMemberEssentialDTO dto) {
-        return this.members.contains(dto);
+    public boolean isPresentMember(String nickname) {
+
+        GameMemberEssentialDTO foundDTO = this.members.stream().filter(gameMemberEssentialDTO -> gameMemberEssentialDTO.nickname().equals(nickname)).findAny().orElse(null);
+        return foundDTO != null;
     }
 
     public GameMember(String id, GameMemberEssentialDTO member) {

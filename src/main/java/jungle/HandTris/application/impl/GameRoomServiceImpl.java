@@ -95,18 +95,21 @@ public class GameRoomServiceImpl implements GameRoomService {
         Pair<String, MemberRecordDetailRes> memberDetails = memberProfileService.getMemberProfileWithStatsByNickname(nickname);
         GameMemberEssentialDTO dto = new GameMemberEssentialDTO(nickname, memberDetails.getFirst(), memberDetails.getSecond());
 
-        if (!gameMember.isPresentMember(dto)) {
+        if (!gameMember.isPresentMember(nickname)) {
             throw new MemberNotFoundException();
         }
 
         // gameMember에서 해당 유저 삭제
-        gameMember.removeMember(dto);
+        gameMember.removeMember(nickname);
 
-        // Redis에 업데이트
+        // 만약 인원이 0명이라면
         if (gameRoom.getParticipantCount() == 0) {
             gameRoomRepository.delete(gameRoom);
             redisTemplate.delete(key);
-        } else {
+        }
+        // 인원이 남아있다면
+        else {
+            redisTemplate.delete(key);
             redisTemplate.opsForValue().set(key, gameMember.toString());
         }
         return gameRoom;
