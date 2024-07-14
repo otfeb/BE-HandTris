@@ -2,8 +2,8 @@ package jungle.HandTris.application.impl;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
+import jungle.HandTris.application.service.AuthService;
 import jungle.HandTris.application.service.BCryptPasswordService;
-import jungle.HandTris.application.service.MemberService;
 import jungle.HandTris.domain.Member;
 import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.domain.exception.*;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MemberServiceImpl implements MemberService {
+public class AuthServiceImpl implements AuthService {
     private final MemberRepository memberRepository;
     private final MemberRecordRepository memberRecordRepository;
     private final BCryptPasswordService bCryptPasswordService;
@@ -30,7 +30,7 @@ public class MemberServiceImpl implements MemberService {
     private String defaultImage;
 
     @Override
-    public Pair<Member, String> signin (MemberRequest memberRequest) {
+    public Pair<Member, String> signin(MemberRequest memberRequest) {
         String username = memberRequest.username();
         String password = memberRequest.password();
 

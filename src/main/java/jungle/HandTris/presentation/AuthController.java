@@ -2,7 +2,7 @@ package jungle.HandTris.presentation;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jungle.HandTris.application.service.MemberService;
+import jungle.HandTris.application.service.AuthService;
 import jungle.HandTris.domain.Member;
 import jungle.HandTris.global.dto.ResponseEnvelope;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
@@ -17,19 +17,19 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final MemberService memberService;
+    private final AuthService authService;
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEnvelope<String> signup(@RequestBody @Valid MemberRequest memberRequest) {
-        memberService.signup(memberRequest);
+        authService.signup(memberRequest);
 
         return ResponseEnvelope.of("Signup Successful");
     }
 
     @PostMapping("/signin")
     public ResponseEnvelope<MemberDetailResWithTokenRes> signin(@RequestBody MemberRequest memberRequest) {
-        Pair<Member, String> result = memberService.signin(memberRequest);
+        Pair<Member, String> result = authService.signin(memberRequest);
 
         Member member = result.getFirst();
         String accessToken = result.getSecond();
@@ -46,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/signout")
     public ResponseEnvelope<String> signout(HttpServletRequest request) {
-        memberService.signout(request);
+        authService.signout(request);
 
         return ResponseEnvelope.of("Signout Successful");
     }

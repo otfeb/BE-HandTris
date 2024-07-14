@@ -2,6 +2,7 @@ package jungle.HandTris.presentation;
 
 import jungle.HandTris.application.service.GameRoomService;
 import jungle.HandTris.application.service.TetrisService;
+import jungle.HandTris.domain.GameRoom;
 import jungle.HandTris.presentation.dto.request.RoomStateReq;
 import jungle.HandTris.presentation.dto.request.TetrisMessageReq;
 import jungle.HandTris.presentation.dto.response.RoomOwnerRes;
@@ -54,6 +55,7 @@ public class TetrisController {
     @MessageMapping("/{roomCode}/disconnect")
     public void handleDisconnect(SimpMessageHeaderAccessor headerAccessor, @DestinationVariable(value = "roomCode") String roomCode) {
         System.out.println("\n========================================= controller disconnect send =========================================");
+
         // playing 중인 게임에서 탈주한 경우
         // message에서 isStart 확인
         boolean isStart = headerAccessor.getFirstNativeHeader("isStart").equals("true");
@@ -68,13 +70,15 @@ public class TetrisController {
         // DB 최신화
         System.out.println("DB 최신화");
         String user = headerAccessor.getHeader("User").toString();
-        gameRoomService.exitGameRoom(user, roomCode);
+        GameRoom gameRoom = gameRoomService.exitGameRoom(user, roomCode);
 
-        // 방장 최신화 : DB 최신화 아래 있어야 한다.
-        System.out.println("방장 최신화");
-        RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
-        messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
-
+        // 참여자가 나갔지만 누군가 남아 있다면
+        if (gameRoom.getParticipantCount() != 0) {
+            // 방장 최신화 : DB 최신화 아래 있어야 한다.
+            System.out.println("방장 최신화");
+            RoomOwnerRes roomOwnerRes = tetrisService.checkRoomOwnerAndReady(roomCode);
+            messagingTemplate.convertAndSend("/topic/owner/" + roomCode, roomOwnerRes);
+        }
 
         System.out.println("\n========================================= disconnect send 종료 =========================================");
     }

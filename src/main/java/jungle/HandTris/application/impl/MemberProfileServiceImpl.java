@@ -10,15 +10,13 @@ import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.global.jwt.JWTUtil;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberDetailRes;
-import jungle.HandTris.presentation.dto.response.MemberProfileDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 
@@ -46,39 +44,7 @@ public class MemberProfileServiceImpl implements MemberProfileService {
     }
 
     @Override
-    public MemberDetailRes loadMemberProfileByToken(HttpServletRequest request) {
-        String accessToken = request.getHeader("Authorization").substring(7);
-
-        String nickname = jwtUtil.getNickname(accessToken);
-
-        Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(UserNotFoundException::new);
-
-        String username = member.getUsername();
-        return new MemberDetailRes(username, nickname);
-    }
-
-    @Override
-    public Pair<MemberProfileDetailsRes, MemberRecordDetailRes> myPage(HttpServletRequest request, String username) {
-        String token = jwtUtil.resolveAccessToken(request);
-        String nickname = jwtUtil.getNickname(token);
-        Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(MemberNotFoundException::new);
-
-        // 요청한 유저와 토큰의 주인이 같은지 검증
-        if (!username.equals(member.getUsername())) {
-            throw new UnauthorizedAccessException();
-        }
-
-        MemberProfileDetailsRes memberInfoDetails = new MemberProfileDetailsRes(member.getNickname(), member.getProfileImageUrl());
-        MemberRecordDetailRes memberRecordDetails = new MemberRecordDetailRes(memberRecordService.getMemberRecord(member.getNickname()));
-
-        return Pair.of(memberInfoDetails, memberRecordDetails);
-    }
-
-
-    @Override
-    public MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage, String username) {
+    public MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage) {
 
         Boolean nicknameChanged = false;
         String token = jwtUtil.resolveAccessToken(request);
@@ -86,10 +52,6 @@ public class MemberProfileServiceImpl implements MemberProfileService {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(MemberNotFoundException::new);
 
-        // 요청한 유저와 토큰의 주인이 같은지 검증
-        if (!username.equals(member.getUsername())) {
-            throw new UnauthorizedAccessException();
-        }
 
         // 변경할 닉네임이 있을 경우에만 업데이트
         if (memberUpdateReq.nickname() != null && !memberUpdateReq.nickname().isEmpty()) {
@@ -110,7 +72,7 @@ public class MemberProfileServiceImpl implements MemberProfileService {
         if (deleteProfileImage) {
             member.updateProfileImageUrl(defaultImage);
         } else if (profileImage != null && profileImage.getSize() > 0) {
-        // 이미지가 존재하는 경우에만 업데이트
+            // 이미지가 존재하는 경우에만 업데이트
             validateImage(profileImage);
             uploadImage(profileImage, member);
         }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExpirationListener implements MessageListener {
 
-    private final MemberService memberService;
+    private final AuthService authService;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
