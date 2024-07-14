@@ -1,14 +1,14 @@
 package jungle.HandTris.application.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
+import jungle.HandTris.presentation.dto.response.ReissueTokenRes;
 import org.springframework.data.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface MemberProfileService {
     Pair<String, MemberRecordDetailRes> getMemberProfileWithStatsByNickname(String nickname);
-
-    MemberProfileUpdateDetailsRes updateMemberProfile(HttpServletRequest request, MemberUpdateReq memberUpdateReq, MultipartFile profileImage, Boolean deleteProfileImage);
+    ReissueTokenRes changeMemberNickname(String nickname, MemberUpdateReq memberUpdateReq);
+    void changeMemberProfileImage(String nickname, MultipartFile profileImage);
+    void deleteMemberProfileImage(String nickname);
 }
