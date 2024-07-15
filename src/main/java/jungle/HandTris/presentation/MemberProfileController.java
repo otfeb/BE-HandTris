@@ -1,43 +1,43 @@
 package jungle.HandTris.presentation;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jungle.HandTris.application.service.MemberProfileService;
-import jungle.HandTris.application.service.MemberRecordService;
-import jungle.HandTris.domain.MemberRecord;
 import jungle.HandTris.global.dto.ResponseEnvelope;
 import jungle.HandTris.global.validation.UserNicknameFromJwt;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberProfileRes;
-import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
+import jungle.HandTris.presentation.dto.response.ReissueTokenRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/member")
+@RequestMapping("/change")
 public class MemberProfileController {
     private final MemberProfileService memberProfileService;
-    private final MemberRecordService memberRecordService;
 
-    @GetMapping("/mypage")
-    public ResponseEnvelope<MemberProfileRes> myPage(@UserNicknameFromJwt String nickname) {
-        MemberRecord memberRecord = memberRecordService.getMemberRecord(nickname);
-        MemberProfileRes memberProfileRes = new MemberProfileRes(memberRecord);
-        return ResponseEnvelope.of(memberProfileRes);
+    @PutMapping("/profileNickname") // 닉네임 변경
+    public ResponseEnvelope<ReissueTokenRes> changeNickname (@UserNicknameFromJwt String nickname, @Valid @RequestBody MemberUpdateReq memberUpdateReq) {
+
+        ReissueTokenRes token = memberProfileService.changeMemberNickname(nickname, memberUpdateReq);
+
+        return ResponseEnvelope.of(token);
     }
 
-    @PatchMapping("/mypage")
-    public ResponseEnvelope<MemberProfileUpdateDetailsRes> updateInfo(
-            HttpServletRequest request,
-            @Valid MemberUpdateReq memberUpdateReq,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-            @RequestParam(value = "deleteProfileImage", required = false, defaultValue = "false") boolean deleteProfileImage
-    ) {
+    @PatchMapping("/profileImage") // 프로필 이미지 변경
+    public ResponseEnvelope<String> changeProfileImage (@UserNicknameFromJwt String nickname, @RequestPart(value = "profileImage") MultipartFile profileImage) {
 
-        MemberProfileUpdateDetailsRes updateMemberDetails = memberProfileService.updateMemberProfile(request, memberUpdateReq, profileImage, deleteProfileImage);
+        memberProfileService.changeMemberProfileImage(nickname, profileImage);
 
-        return ResponseEnvelope.of(updateMemberDetails);
+        return ResponseEnvelope.of("Profile Image Change Successful");
     }
+
+    @DeleteMapping("/profileImage") // 프로필 이미지 제거
+    public ResponseEnvelope<String> deleteProfileImage (@UserNicknameFromJwt String nickname) {
+
+        memberProfileService.deleteMemberProfileImage(nickname);
+
+        return ResponseEnvelope.of("Profile Image Delete Successful");
+    }
+
 }

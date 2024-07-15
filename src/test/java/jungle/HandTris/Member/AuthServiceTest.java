@@ -12,8 +12,8 @@ import jungle.HandTris.domain.exception.*;
 import jungle.HandTris.domain.repo.MemberRepository;
 import jungle.HandTris.presentation.dto.request.MemberRequest;
 import jungle.HandTris.presentation.dto.request.MemberUpdateReq;
-import jungle.HandTris.presentation.dto.response.MemberProfileUpdateDetailsRes;
 import jungle.HandTris.presentation.dto.response.MemberRecordDetailRes;
+import jungle.HandTris.presentation.dto.response.ReissueTokenRes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -339,7 +339,7 @@ public class AuthServiceTest {
 
     @Nested
     @DisplayName("회원 정보 요청")
-    class GetMemberProfile {
+     class GetMemberProfile {
 
     }
 
@@ -365,12 +365,11 @@ public class AuthServiceTest {
                 MemberUpdateReq changeNickname = new MemberUpdateReq("user2");
 
                 // when
-                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, null, false);
+                ReissueTokenRes changeMemberProfile = memberProfileService.changeMemberNickname(
+                        requestMember.nickname(), changeNickname);
 
                 // then
-                Assertions.assertThat(changeMemberProfile.nickname()).isEqualTo(member.getNickname());
-                Assertions.assertThat(changeMemberProfile.token()).isNotEqualTo(token);
+                Assertions.assertThat(changeMemberProfile.access()).isNotEqualTo(token);
             }
 
             @Test
@@ -390,8 +389,8 @@ public class AuthServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                    memberProfileService.updateMemberProfile(
-                            request, changeNickname, null, null);
+                    memberProfileService.changeMemberNickname(
+                            requestMember.nickname(), changeNickname);
                 }).isInstanceOf(NicknameNotChangedException.class);
             }
 
@@ -414,8 +413,8 @@ public class AuthServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                    memberProfileService.updateMemberProfile(
-                            request, changeNickname, null, null);
+                    memberProfileService.changeMemberNickname(
+                            requestMember1.nickname(), changeNickname);
                 }).isInstanceOf(DuplicateNicknameException.class);
             }
         }
@@ -440,7 +439,7 @@ public class AuthServiceTest {
                 MockHttpServletRequest request = new MockHttpServletRequest();
                 request.addHeader("Authorization", "Bearer " + token);
 
-                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+                String originImageUrl = member.getProfileImageUrl();
 
                 // 변경하려는 프로필 사진
                 MockMultipartFile changeProfileImage = new MockMultipartFile(
@@ -452,11 +451,10 @@ public class AuthServiceTest {
                 );
 
                 // when
-                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, changeProfileImage, false);
+                memberProfileService.changeMemberProfileImage(requestMember.nickname(), changeProfileImage);
 
                 // then
-                Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+                Assertions.assertThat(originImageUrl).isEqualTo(member.getProfileImageUrl());
             }
 
             @Test
@@ -472,7 +470,8 @@ public class AuthServiceTest {
                 MockHttpServletRequest request = new MockHttpServletRequest();
                 request.addHeader("Authorization", "Bearer " + token);
 
-                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
+                String originImageUrl = member.getProfileImageUrl();
+
                 // 변경하려는 프로필 사진
                 MockMultipartFile changeProfileImage = new MockMultipartFile(
                         "image", // 파라미터 이름
@@ -481,14 +480,12 @@ public class AuthServiceTest {
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=".getBytes() // PNG 이미지 데이터 (Base64)
                 );
 
-                MemberProfileUpdateDetailsRes changeMemberProfile = memberProfileService.updateMemberProfile(
-                        request, changeNickname, changeProfileImage, false);
+                memberProfileService.changeMemberProfileImage(requestMember.nickname(), changeProfileImage);
 
-                Assertions.assertThat(changeMemberProfile.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+                Assertions.assertThat(originImageUrl).isEqualTo(member.getProfileImageUrl());
 
                 // when
-                memberProfileService.updateMemberProfile(
-                        request, changeNickname, null, true);
+                memberProfileService.deleteMemberProfileImage(requestMember.nickname());
                 // then
                 Assertions.assertThat(defaultImage).isEqualTo(member.getProfileImageUrl());
             }
@@ -499,14 +496,7 @@ public class AuthServiceTest {
                 // given
                 MemberRequest requestMember = new MemberRequest("user1", "1q2w3e4r!", "user1");
                 authService.signup(requestMember);
-                Pair<Member, String> SigninResult = authService.signin(requestMember);
-                Member member = SigninResult.getFirst();
-                String token = SigninResult.getSecond();
 
-                MockHttpServletRequest request = new MockHttpServletRequest();
-                request.addHeader("Authorization", "Bearer " + token);
-
-                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
                 // 변경하려는 프로필 사진
                 MockMultipartFile changeProfileImage = new MockMultipartFile(
                         "image", // 파라미터 이름
@@ -517,8 +507,7 @@ public class AuthServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                    memberProfileService.updateMemberProfile(
-                            request, changeNickname, changeProfileImage, false);
+                    memberProfileService.changeMemberProfileImage(requestMember.nickname(), changeProfileImage);
                 }).isInstanceOf(InvalidImageTypeException.class);
             }
 
@@ -532,10 +521,6 @@ public class AuthServiceTest {
                 Member member = SigninResult.getFirst();
                 String token = SigninResult.getSecond();
 
-                MockHttpServletRequest request = new MockHttpServletRequest();
-                request.addHeader("Authorization", "Bearer " + token);
-
-                MemberUpdateReq changeNickname = new MemberUpdateReq(null);
                 // 변경하려는 프로필 사진
                 MockMultipartFile changeProfileImage = new MockMultipartFile(
                         "image", // 파라미터 이름
@@ -550,8 +535,7 @@ public class AuthServiceTest {
 
                 // when & then
                 Assertions.assertThatThrownBy(() -> {
-                    memberProfileService.updateMemberProfile(
-                            request, changeNickname, changeProfileImage, false);
+                    memberProfileService.changeMemberProfileImage(requestMember.nickname(), changeProfileImage);
                 }).isInstanceOf(InvalidImageTypeException.class);
             }
         }
