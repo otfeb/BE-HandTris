@@ -44,7 +44,8 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable()
                 )
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/", "/auth/signin", "/auth/signup", "/reissue", "/oauth2/loginSuccess", "ws/**").permitAll()
+                        .requestMatchers("/", "/auth/signin", "/auth/signup",
+                                "/reissue", "/oauth2/loginSuccess", "ws/**", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(Customizer.withDefaults()
