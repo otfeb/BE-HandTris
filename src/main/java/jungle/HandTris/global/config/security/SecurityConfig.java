@@ -2,10 +2,7 @@ package jungle.HandTris.global.config.security;
 
 import jungle.HandTris.application.service.CustomOAuth2MemberService;
 import jungle.HandTris.global.filter.JWTFilter;
-import jungle.HandTris.global.handler.JWTAccessDeniedHandler;
-import jungle.HandTris.global.handler.JWTAuthenticateDeniedHandler;
-import jungle.HandTris.global.handler.OAuth2FailureHandler;
-import jungle.HandTris.global.handler.OAuth2SuccessHandler;
+import jungle.HandTris.global.handler.*;
 import jungle.HandTris.global.jwt.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +44,8 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable()
                 )
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/", "/auth/signin", "/auth/signup", "/reissue/**", "/oauth2/loginSuccess", "ws/**").permitAll()
+                        .requestMatchers("/", "/auth/signin", "/auth/signup",
+                                "/reissue", "/oauth2/loginSuccess", "ws/**", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(Customizer.withDefaults()
