@@ -15,9 +15,9 @@ public class ReissueController {
 
     private final ReissueService reissueService;
 
-    @PostMapping("/reissue/{username}")
-    public ResponseEnvelope<ReissueTokenRes> reissue (HttpServletRequest request, @PathVariable("username") String requestUsername) {
-        ReissueTokenRes token = reissueService.reissue(request, requestUsername);
+    @PostMapping("/reissue")
+    public ResponseEnvelope<ReissueTokenRes> reissue (HttpServletRequest request) {
+        ReissueTokenRes token = reissueService.reissue(request);
 
         return ResponseEnvelope.of(token);
     }

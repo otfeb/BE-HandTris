@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jungle.HandTris.application.service.ReissueService;
 import jungle.HandTris.domain.Member;
 import jungle.HandTris.domain.exception.InvalidTokenFormatException;
+import jungle.HandTris.domain.exception.MemberNotFoundException;
 import jungle.HandTris.domain.exception.RefreshTokenExpiredException;
 import jungle.HandTris.domain.exception.UnauthorizedAccessException;
 import jungle.HandTris.domain.repo.MemberRepository;
@@ -19,7 +20,7 @@ public class ReissueServiceImpl implements ReissueService {
     private final JWTUtil jwtUtil;
     private final MemberRepository memberRepository;
 
-    public ReissueTokenRes reissue (HttpServletRequest request, String requestUsername) {
+    public ReissueTokenRes reissue (HttpServletRequest request) {
         String refreshToken = jwtUtil.resolveRefreshToken(request);
 
         //토큰 소멸 시간 검증
@@ -34,7 +35,8 @@ public class ReissueServiceImpl implements ReissueService {
         }
 
         String nickname = jwtUtil.getNickname(refreshToken);
-        Member member = memberRepository.findByUsername(requestUsername);
+        Member member = memberRepository.findByNickname(nickname).
+                orElseThrow(MemberNotFoundException::new);
 
         if(!member.getRefreshToken().equals(refreshToken)) {
             throw new UnauthorizedAccessException();
