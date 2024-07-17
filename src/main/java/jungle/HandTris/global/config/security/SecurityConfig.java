@@ -2,7 +2,10 @@ package jungle.HandTris.global.config.security;
 
 import jungle.HandTris.application.service.CustomOAuth2MemberService;
 import jungle.HandTris.global.filter.JWTFilter;
-import jungle.HandTris.global.handler.*;
+import jungle.HandTris.global.handler.JWTAccessDeniedHandler;
+import jungle.HandTris.global.handler.JWTAuthenticateDeniedHandler;
+import jungle.HandTris.global.handler.OAuth2FailureHandler;
+import jungle.HandTris.global.handler.OAuth2SuccessHandler;
 import jungle.HandTris.global.jwt.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -72,7 +75,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://handtris.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://handtris.vercel.app", "https://handtris-jungle.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("content-type", "Authorization", "Authorization-Refresh", "x-requested-with"));
         configuration.setAllowCredentials(true);

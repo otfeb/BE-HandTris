@@ -27,7 +27,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 엔드포인트를 등록하고 SockJS를 활성화합니다.
-        registry.addEndpoint("/ws").setAllowedOrigins("http://localhost:3000", "https://handtris.vercel.app").withSockJS();
+        registry.addEndpoint("/ws").setAllowedOrigins("http://localhost:3000", "https://handtris.vercel.app", "https://handtris-jungle.vercel.app").withSockJS();
     }
 
     @Override
