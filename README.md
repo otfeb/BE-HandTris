@@ -194,7 +194,8 @@ Organization에서 BackEnd 별도의 레파지토리에서 관리합니다.
 - `chore` : 패키지 관련 및 빌드코드 수정
 
 # 3. 소개 포스터
-- 사진
+![Handtris_Poster](https://github.com/user-attachments/assets/2ed785f8-c07d-4906-a99a-15a2860219c0)
+
 
 
 # 개발기간
